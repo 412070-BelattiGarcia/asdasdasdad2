@@ -1,4 +1,62 @@
 package ar.edu.utn.frc.tup.piii.services.cards;
 
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse;
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardSearchRequest;
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardSummaryResponse;
+import ar.edu.utn.frc.tup.piii.exceptions.NotFoundException;
+import ar.edu.utn.frc.tup.piii.mappers.cards.CardMapper;
+import ar.edu.utn.frc.tup.piii.repositories.entities.CardEntity;
+import ar.edu.utn.frc.tup.piii.repositories.jpa.CardJpaRepository;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
 public class CardCatalogService {
+
+    private final CardJpaRepository cardJpaRepository;
+    private final CardMapper cardMapper;
+
+    public Page<CardSummaryResponse> searchCards(CardSearchRequest request) {
+        int page = request.page() != null ? request.page() : 0;
+        int size = request.size() != null ? request.size() : 20;
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Specification<CardEntity> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (request.query() != null && !request.query().isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("name")),
+                        "%" + request.query().toLowerCase() + "%"));
+            }
+
+            if (request.supertype() != null && !request.supertype().isBlank()) {
+                predicates.add(cb.equal(root.get("supertype"), request.supertype()));
+            }
+
+            if (request.setCode() != null && !request.setCode().isBlank()) {
+                predicates.add(cb.equal(root.get("setCode"), request.setCode()));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return cardJpaRepository.findAll(spec, pageable)
+                .map(cardMapper::toSummaryResponse);
+    }
+
+    public CardDetailResponse getCardById(String id) {
+        CardEntity entity = cardJpaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Card not found with id: " + id));
+        return cardMapper.toDetailResponse(entity);
+    }
 }

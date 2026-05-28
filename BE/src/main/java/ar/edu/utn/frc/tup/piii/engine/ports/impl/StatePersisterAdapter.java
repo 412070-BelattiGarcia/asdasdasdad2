@@ -50,16 +50,16 @@ public class StatePersisterAdapter implements StatePersisterPort {
     }
 
     @Override
-    public GameState loadState(UUID matchId) {
+    public Optional<GameState> loadState(UUID matchId) {
         Optional<MatchStateEntity> latest = matchStateJpaRepository.findAll().stream()
                 .filter(ms -> ms.getMatch().getId().equals(matchId))
                 .max(Comparator.comparing(MatchStateEntity::getVersion));
 
         if (latest.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
         try {
-            return objectMapper.readValue(latest.get().getSerializedState(), GameState.class);
+            return Optional.of(objectMapper.readValue(latest.get().getSerializedState(), GameState.class));
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize GameState", e);
         }

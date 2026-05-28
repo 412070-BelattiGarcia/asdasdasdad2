@@ -14,7 +14,7 @@ GameEngine.applyAction(matchId, playerId, action)
 
 ```
 engine/action/
-matches/api/GameActionController.java
+controllers/matches/GameActionController.java
 ```
 
 ## Frontend location
@@ -31,12 +31,14 @@ features/match/services/game-action-dispatcher.service.ts
   "type": "ATTACH_ENERGY",
   "playerId": "player-1",
   "payload": {
-    "energyCardInstanceId": "card-instance-502",
+    "handIndex": 2,
     "targetPokemonInstanceId": "card-instance-100"
   },
   "clientRequestId": "client-req-001"
 }
 ```
+
+Payload fields reference cards by `handIndex` (position in hand) rather than `cardInstanceId`, since the client knows its hand order but not the server's internal instance IDs for unrevealed cards.
 
 ## GameActionResponse success
 
@@ -47,14 +49,14 @@ features/match/services/game-action-dispatcher.service.ts
   "publicState": {},
   "privateState": {},
   "events": [
-    {
-      "type": "ENERGY_ATTACHED",
-      "message": "Santi attached Fire Energy to Slugma."
-    }
+    "Santi attached Fire Energy to Slugma."
   ],
   "error": null
 }
 ```
+
+- `events` is a `List<String>` of human-readable descriptions of what happened.
+- No `GameEvent` objects, no `GameEventType` enum. Events are inline plain strings.
 
 ## GameActionResponse error
 
@@ -83,7 +85,7 @@ features/match/services/game-action-dispatcher.service.ts
   "type": "PUT_BASIC_ON_BENCH",
   "playerId": "player-1",
   "payload": {
-    "cardInstanceId": "card-instance-501"
+    "handIndex": 0
   },
   "clientRequestId": "client-req-002"
 }
@@ -96,7 +98,7 @@ features/match/services/game-action-dispatcher.service.ts
   "type": "ATTACH_ENERGY",
   "playerId": "player-1",
   "payload": {
-    "energyCardInstanceId": "card-instance-502",
+    "handIndex": 2,
     "targetPokemonInstanceId": "card-instance-100"
   },
   "clientRequestId": "client-req-003"
@@ -110,14 +112,14 @@ features/match/services/game-action-dispatcher.service.ts
   "type": "DECLARE_ATTACK",
   "playerId": "player-1",
   "payload": {
-    "attackerPokemonInstanceId": "card-instance-100",
     "attackIndex": 0,
-    "targetPokemonInstanceId": "card-instance-300",
-    "declaredSelections": []
+    "targetPokemonInstanceId": "card-instance-300"
   },
   "clientRequestId": "client-req-004"
 }
 ```
+
+The attacker is implicitly the Active Pokémon of the requesting player.
 
 ## Action: RETREAT_ACTIVE
 
@@ -126,35 +128,60 @@ features/match/services/game-action-dispatcher.service.ts
   "type": "RETREAT_ACTIVE",
   "playerId": "player-1",
   "payload": {
-    "newActivePokemonInstanceId": "card-instance-110",
-    "energyCardInstanceIdsToDiscard": [
-      "card-instance-201"
-    ]
+    "benchIndex": 0
   },
   "clientRequestId": "client-req-005"
 }
 ```
 
-## Action: CHOOSE_KNOCKOUT_REPLACEMENT
+- `benchIndex`: position on bench (0-4) for the Pokémon to become Active.
+- Energy discard for retreat cost is automatic: the backend discards the first N attached Energies that satisfy the cost from the retreating Active Pokémon. The frontend only specifies the target bench slot.
+
+## Action: EVOLVE_POKEMON
 
 ```json
 {
-  "type": "CHOOSE_KNOCKOUT_REPLACEMENT",
-  "playerId": "player-2",
+  "type": "EVOLVE_POKEMON",
+  "playerId": "player-1",
   "payload": {
-    "newActivePokemonInstanceId": "card-instance-330"
+    "handIndex": 2,
+    "targetPokemonInstanceId": "card-instance-100"
   },
   "clientRequestId": "client-req-006"
+}
+```
+
+## Action: PLAY_TRAINER
+
+```json
+{
+  "type": "PLAY_TRAINER",
+  "playerId": "player-1",
+  "payload": {
+    "handIndex": 4
+  },
+  "clientRequestId": "client-req-007"
+}
+```
+
+## Action: END_TURN
+
+```json
+{
+  "type": "END_TURN",
+  "playerId": "player-1",
+  "payload": {},
+  "clientRequestId": "client-req-008"
 }
 ```
 
 ## Action rules
 
 - playerId must match the authenticated/guest session.
-- Only the current player can act unless resolving a pending decision.
+- Only the current player can act.
 - Every valid action must:
   - validate rules
   - mutate state
   - persist state
-  - append immutable log entry
   - publish WebSocket events
+- Handlers return `void`; they mutate `GameState` directly via `EngineContext`.

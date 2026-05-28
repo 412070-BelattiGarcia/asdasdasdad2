@@ -1,16 +1,31 @@
 package ar.edu.utn.frc.tup.piii.engine.action;
 
-import java.util.Map;
 import java.util.UUID;
 
 public class GameAction {
-    private String type;
+    private GameActionType type;
     private UUID playerId;
-    private Map<String, Object> payload;
+    private GameActionPayload payload;
     private String clientRequestId;
 
-    public String getType() { return type; }
+    public GameAction() {}
+
+    public GameAction(GameActionType type, UUID playerId, GameActionPayload payload, String clientRequestId) {
+        this.type = type;
+        this.playerId = playerId;
+        this.payload = payload;
+        this.clientRequestId = clientRequestId;
+    }
+
+    public GameActionType getType() { return type; }
+    public void setType(GameActionType type) { this.type = type; }
+
     public UUID getPlayerId() { return playerId; }
-    public Map<String, Object> getPayload() { return payload; }
+    public void setPlayerId(UUID playerId) { this.playerId = playerId; }
+
+    public GameActionPayload getPayload() { return payload; }
+    public void setPayload(GameActionPayload payload) { this.payload = payload; }
+
     public String getClientRequestId() { return clientRequestId; }
+    public void setClientRequestId(String clientRequestId) { this.clientRequestId = clientRequestId; }
 }

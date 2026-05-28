@@ -9,149 +9,182 @@ OpenCode must not create alternative package names, duplicated DTO folders, or p
 ## Backend root package
 
 ```
-com.pokemontcg
+ar.edu.utn.frc.tup.piii
 ```
 
 ## Backend structure
 
 ```
 backend/
-src/main/java/com/pokemontcg/
-  PokemonTcgApplication.java
-  config/
-    CorsConfig.java
-    WebSocketConfig.java
-    OpenApiConfig.java
-  common/
-    error/
-      ApiErrorResponse.java
-      GlobalExceptionHandler.java
-      DomainException.java
-      ValidationException.java
-      NotFoundException.java
-    ids/
-      MatchId.java
-      PlayerId.java
-      CardId.java
-      CardInstanceId.java
-      DeckId.java
+src/main/java/ar/edu/utn/frc/tup/piii/
+  Application.java
+  advice/
+    GlobalExceptionHandler.java
   cards/
-    api/
-      CardController.java
-      dto/
-        CardSummaryResponse.java
-        CardDetailResponse.java
-        CardSearchRequest.java
-    application/
-      CardCatalogService.java
-      CardCacheSyncService.java
     domain/
       CardDefinition.java
-      PokemonCardDefinition.java
+      CardSupertype.java
       EnergyCardDefinition.java
+      EnergyType.java
+      PokemonCardDefinition.java
+      PokemonStage.java
       TrainerCardDefinition.java
-      AttackDefinition.java
-      EnergyCost.java
-      WeaknessDefinition.java
-      ResistanceDefinition.java
-    infrastructure/
-      CardEntity.java
-      CardJpaRepository.java
-      PokemonTcgApiClient.java
-      CardMapper.java
-  decks/
-    api/
+      TrainerType.java
+  clients/
+    PokemonTcgApiClient.java
+  configs/
+    GameEngineConfig.java
+    MappersConfig.java
+    SpringDocConfig.java
+    WebSocketConfig.java
+  controllers/
+    PingController.java
+    cards/
+      CardController.java
+    decks/
       DeckController.java
-      dto/
-        DeckResponse.java
-        DeckCardResponse.java
-        CreateDeckRequest.java
-        UpdateDeckRequest.java
-        DeckValidationResponse.java
-    application/
-      DeckService.java
-      DeckValidator.java
-      SeedDeckService.java
+    matches/
+      GameActionController.java
+      MatchController.java
+  decks/
     domain/
       Deck.java
       DeckCard.java
-      DeckValidationResult.java
       DeckValidationError.java
-    infrastructure/
-      DeckEntity.java
-      DeckCardEntity.java
-      DeckJpaRepository.java
-      DeckCardJpaRepository.java
-      DeckMapper.java
-  matches/
-    api/
-      MatchController.java
-      GameActionController.java
-      dto/
-        CreateMatchRequest.java
-        JoinMatchRequest.java
-        MatchResponse.java
-        GameActionRequest.java
-        GameActionResponse.java
-    application/
-      MatchApplicationService.java
-      MatchQueryService.java
-    domain/
-      Match.java
-      MatchStatus.java
-    infrastructure/
-      MatchEntity.java
-      MatchStateEntity.java
-      MatchLogEntity.java
-      MatchJpaRepository.java
-      MatchStateJpaRepository.java
-      MatchLogJpaRepository.java
-      MatchMapper.java
-    websocket/
-      MatchWebSocketPublisher.java
-      MatchWebSocketController.java
+      DeckValidationResult.java
+  dtos/
+    cards/
+      CardDetailResponse.java
+      CardSearchRequest.java
+      CardSummaryResponse.java
+    common/
+      ErrorApi.java
+    decks/
+      CreateDeckRequest.java
+      DeckCardResponse.java
+      DeckResponse.java
+      DeckValidationResponse.java
+      UpdateDeckRequest.java
+    matches/
+      CreateMatchRequest.java
+      GameActionRequest.java
+      GameActionResponse.java
+      JoinMatchRequest.java
+      MatchResponse.java
+      MatchStateResponse.java
   engine/
+    EngineContext.java
+    ErrorCode.java
     GameEngine.java
+    PlayerSide.java
+    SpecialCondition.java
+    action/
+      ActionResult.java
+      GameAction.java
+      GameActionPayload.java
+      GameActionType.java
+      GameError.java
+      AttachEnergyPayload.java
+      DeclareAttackPayload.java
+      PutBasicOnBenchPayload.java
+      EvolvePokemonPayload.java
+      PlayTrainerPayload.java
+      RetreatPayload.java
+    attack/
+      AttackResolver.java
+    handlers/
+      ActionHandler.java
+      PutBasicOnBenchHandler.java
+      AttachEnergyHandler.java
+      EvolvePokemonHandler.java
+      PlayTrainerHandler.java
+      DeclareAttackHandler.java
+      RetreatActiveHandler.java
+      EndTurnHandler.java
+      ChooseNewActiveAfterKnockoutHandler.java
+      TakePrizeCardHandler.java
     model/
+      CardInstance.java
+      GameMetadata.java
+      GamePhase.java
       GameState.java
       PlayerState.java
-      BoardState.java
       PokemonInPlay.java
-      AttachedCard.java
       TurnFlags.java
-      PublicGameState.java
-      PrivatePlayerState.java
-    action/
-      GameAction.java
-      GameActionType.java
-      ActionResult.java
-      GameError.java
-    event/
-      GameEvent.java
-      GameEventType.java
+    ports/
+      CardLookupPort.java
+      DeckLoadPort.java
+      RandomizerPort.java
+      StatePersisterPort.java
+      impl/
+        CardLookupAdapter.java
+        DeckLoadAdapter.java
+        RandomizerAdapter.java
+        StatePersisterAdapter.java
+    rules/
+      RuleValidator.java
     setup/
       SetupManager.java
-      MulliganService.java
     turn/
       TurnManager.java
       TurnPhase.java
-    rules/
-      RuleValidator.java
-    attack/
-      AttackResolver.java
-      AttackStep.java
-      DamageCalculator.java
-      EnergyRequirementValidator.java
-    status/
-      StatusEffectManager.java
     victory/
-      VictoryConditionChecker.java
       FinishReason.java
-    ports/
-      CardLookupPort.java
-      RandomizerPort.java
-      StatePersisterPort.java
-      EventPublisherPort.java
+      VictoryConditionChecker.java
+  exceptions/
+    DomainException.java
+    NotFoundException.java
+    ValidationException.java
+  mappers/
+    cards/
+      CardMapper.java
+    decks/
+      DeckMapper.java
+    matches/
+      MatchMapper.java
+  matches/
+    domain/
+      Match.java
+      MatchStatus.java
+  persistence/
+    GameStateConverter.java
+    MatchEntity.java
+    MatchRepository.java
+  repositories/
+    entities/
+      CardAttackEntity.java
+      CardEntity.java
+      CardResistanceEntity.java
+      CardWeaknessEntity.java
+      DeckCardEntity.java
+      DeckEntity.java
+      GuestPlayerEntity.java
+      MatchPlayerEntity.java
+      UserEntity.java
+    jpa/
+      CardAttackJpaRepository.java
+      CardJpaRepository.java
+      CardResistanceJpaRepository.java
+      CardWeaknessJpaRepository.java
+      DeckCardJpaRepository.java
+      DeckJpaRepository.java
+      GuestPlayerJpaRepository.java
+      MatchPlayerJpaRepository.java
+      UserJpaRepository.java
+  services/
+    cards/
+      CardCacheSyncService.java
+      CardCatalogService.java
+    decks/
+      DeckService.java
+      DeckValidator.java
+      SeedDeckService.java
+    matches/
+      MatchApplicationService.java
+      MatchQueryService.java
+  websocket/
+    MatchWebSocketController.java
+    MatchWebSocketPublisher.java
 ```
 
 ## Frontend structure
@@ -159,73 +192,73 @@ src/main/java/com/pokemontcg/
 ```
 frontend/
 src/app/
+  app.config.ts
+  app.css
+  app.html
+  app.routes.ts
+  app.spec.ts
+  app.ts
   core/
     api/
       api-client.service.ts
-      match-api.service.ts
       card-api.service.ts
       deck-api.service.ts
+      match-api.service.ts
     websocket/
       match-socket.service.ts
-    interceptors/
-    error/
   shared/
     models/
+      api-error.models.ts
       card.models.ts
       deck.models.ts
-      game-state.models.ts
       game-action.models.ts
-      game-event.models.ts
-      api-error.models.ts
-    components/
-      card-image/
-      loading/
-      error-message/
+      game-state.models.ts
   features/
-    lobby/
-      lobby-page.component.ts
-      lobby-page.component.html
-      lobby-page.component.css
-    match/
+    cards/
+      routes.ts
       pages/
-        match-page.component.ts
-        match-page.component.html
-        match-page.component.css
-      components/
-        board/
-        player-area/
-        opponent-area/
-        active-pokemon-slot/
-        bench-zone/
-        hand-zone/
-        prize-zone/
-        discard-zone/
-        action-panel/
-        game-log/
-      services/
-        match-facade.service.ts
-        game-action-dispatcher.service.ts
+        card-catalog-page/
+          card-catalog-page.ts
     decks/
+      routes.ts
       pages/
-        deck-list-page.component.ts
-        deck-builder-page.component.ts
-      components/
-        card-search/
-        deck-card-list/
-        deck-validation-panel/
+        deck-list-page/
+          deck-list-page.ts
+        deck-builder-page/
+          deck-builder-page.ts
       services/
         deck-builder-facade.service.ts
-    auth/
-  README.md
+    lobby/
+      routes.ts
+      pages/
+        lobby-page/
+          lobby-page.ts
+    match/
+      routes.ts
+      pages/
+        match-page/
+          match-page.ts
+      services/
+        game-action-dispatcher.service.ts
+        match-facade.service.ts
 ```
 
 ## Dependency rules
 
 ### Backend
 
-- api may depend on application
-- application may depend on domain, engine, and infrastructure ports
-- infrastructure may depend on database/JPA/external APIs
+- controllers may depend on services and dtos
+- controllers may depend on engine for action types and enums
+- services may depend on domain, engine, repositories, mappers, clients, and websocket
+- services may depend on dtos for request/response mapping
+- repositories may depend on database/JPA/external APIs
+- domain (cards/domain, decks/domain, matches/domain) must not depend on:
+  - Spring annotations
+  - JPA entities
+  - REST controllers
+  - WebSocket classes
+  - repositories
+  - database classes
 - engine must not depend on:
   - Spring annotations
   - JPA entities
@@ -233,8 +266,12 @@ src/app/
   - WebSocket classes
   - repositories
   - database classes
+- engine ports/impl may depend on engine ports and infrastructure
+- advice depends on exceptions and dtos
+- mappers depend on domain and dtos
+- websocket depends on engine for event types
 
-### Forbidden inside engine
+### Forbidden in domain and engine
 
 Do not use:
 - @RestController
@@ -243,7 +280,7 @@ Do not use:
 - @Entity
 - @Autowired
 
-The engine must be Java-oriented, testable and isolated.
+The engine and domain packages must be Java-oriented, testable and isolated.
 
 ## Frontend rule
 
@@ -255,6 +292,7 @@ Frontend can:
 - show available buttons
 - display errors
 - subscribe to WebSocket events
+- lazy load feature routes
 
 Frontend cannot:
 - calculate official damage

@@ -17,9 +17,9 @@ core/websocket/
 
 ## Frontend may store
 
-- publicState: PublicGameState
-- privateState: PrivatePlayerState
-- events: GameEvent[]
+- publicState: MatchPublicView
+- privateState: PlayerPrivateView
+- events: string[]
 - connectionStatus: "CONNECTED" | "DISCONNECTED" | "RECONNECTING"
 - selectedCardInstanceId: string | null
 - selectedTargetInstanceId: string | null
@@ -70,7 +70,7 @@ Even if frontend enables a wrong button, backend must reject invalid action.
 
 ## GameAction dispatch example
 
-`dispatchAttachEnergy(energyCardInstanceId: string, targetPokemonInstanceId: string): void`
+`dispatchAttachEnergy(handIndex: number, targetPokemonInstanceId: string): void`
 
 must send:
 ```json
@@ -78,7 +78,7 @@ must send:
   "type": "ATTACH_ENERGY",
   "playerId": "player-1",
   "payload": {
-    "energyCardInstanceId": "card-instance-502",
+    "handIndex": 2,
     "targetPokemonInstanceId": "card-instance-100"
   },
   "clientRequestId": "client-req-003"
@@ -107,11 +107,11 @@ Later:
 
 ## Visual privacy
 
-Opponent hand:
+Opponent hand is exposed only as a count in the public state view. Never render opponent hand card names unless a specific rule reveals them.
+
 ```json
 {
-  "handCount": 6,
-  "cards": null
+  "handCount": 6
 }
 ```
 

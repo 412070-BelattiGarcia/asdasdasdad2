@@ -804,4 +804,3 @@ ALTER TABLE ONLY public.match_states
 --
 
 \unrestrict acd5uAHhQXVSPO6LIbHrC3ZiOQVH4TGWNSq2HWH3dfTaaekhhnMKw3zTumbqCjY
-

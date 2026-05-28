@@ -12,7 +12,7 @@ Frontend receives only sanitized state.
 
 ```
 engine/model/
-matches/infrastructure/MatchStateEntity.java
+persistence/ (serialized as JSON column in MatchEntity)
 ```
 
 ## Frontend location
@@ -22,7 +22,7 @@ shared/models/game-state.models.ts
 features/match/
 ```
 
-## GameState private backend model
+## GameState (private backend model)
 
 ```
 matchId: UUID
@@ -41,15 +41,15 @@ createdAt: Instant
 updatedAt: Instant
 ```
 
-## PlayerState private backend model
+## PlayerState (private backend model)
 
 ```
 playerId: UUID
 side: PlayerSide
-deck: CardInstanceId[]
-hand: CardInstanceId[]
-prizes: CardInstanceId[]
-discard: CardInstanceId[]
+deck: CardInstance[]
+hand: CardInstance[]
+prizes: CardInstance[]
+discard: CardInstance[]
 activePokemon: PokemonInPlay | null
 bench: PokemonInPlay[]
 mulliganCount: int
@@ -59,23 +59,17 @@ mulliganCount: int
 
 ```
 instanceId: UUID
-cardId: string
+cardDefinitionId: string
 ownerPlayerId: UUID
 enteredTurnNumber: int
 evolvedThisTurn: boolean
 damageCounters: int
 specialConditions: SpecialCondition[]
-attachedCards: AttachedCard[]
+attachedEnergies: CardInstance[]
 toolCardInstanceId: UUID | null
 ```
 
-## AttachedCard
-
-```
-instanceId: UUID
-cardId: string
-attachedAs: "ENERGY" | "TOOL" | "EVOLUTION"
-```
+Energies attached to a Pokémon are stored as a `List<CardInstance>` directly in `PokemonInPlay.attachedEnergies`. No separate `AttachedCard` class exists.
 
 ## TurnFlags
 
@@ -97,70 +91,75 @@ choices: CHOICE[]
 timeoutSeconds: int
 ```
 
-## PublicGameState
+## Public view (projected from GameState)
+
+The `GameActionResponse.publicState` is a projection — not a separate class. It exposes only:
+- matchId, status, phase, turnNumber, currentPlayerId
+- For each player: side, prizes (IDs only), activePokemon (instanceId, cardDefinitionId, damageCounters, specialConditions, attachedEnergyCount), bench (same projection), mulliganCount
+- deckCount, handCount, discardCount for each player (counts only)
+
+No separate `PublicGameState` or `PrivatePlayerState` classes exist. The view is built inline by `MatchQueryService` or the controller layer.
+
+## Public view JSON example
 
 ```json
 {
-  "matchId": "uuid",
+  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
   "status": "ACTIVE",
   "phase": "MAIN",
   "turnNumber": 3,
   "currentPlayerId": "player-1",
-  "firstPlayerId": "player-1",
   "players": [
     {
       "playerId": "player-1",
       "side": "PLAYER_ONE",
       "prizes": ["ci-20", "ci-21", "ci-22", "ci-23", "ci-24", "ci-25"],
+      "prizesRemaining": 6,
       "activePokemon": {
         "instanceId": "ci-30",
-        "cardId": "xy1-10",
+        "cardDefinitionId": "xy1-10",
         "damageCounters": 20,
         "specialConditions": [],
-        "attachedCards": ["ci-40"]
+        "attachedEnergyCount": 1
       },
-      "bench": []
+      "bench": [],
+      "deckCount": 35,
+      "handCount": 6,
+      "discardCount": 0,
+      "mulliganCount": 0
     },
     {
       "playerId": "player-2",
       "side": "PLAYER_TWO",
       "prizes": ["ci-50", "ci-51", "ci-52", "ci-53", "ci-54", "ci-55"],
+      "prizesRemaining": 6,
       "activePokemon": {
         "instanceId": "ci-60",
-        "cardId": "xy1-7",
+        "cardDefinitionId": "xy1-7",
         "damageCounters": 0,
         "specialConditions": ["POISONED"],
-        "attachedCards": []
+        "attachedEnergyCount": 0
       },
-      "bench": []
+      "bench": [],
+      "deckCount": 35,
+      "handCount": 6,
+      "discardCount": 0,
+      "mulliganCount": 0
     }
   ]
 }
 ```
 
-## PrivatePlayerState
+## Private view (projected per player)
 
-```json
-{
-  "playerId": "player-1",
-  "hand": [
-    {
-      "instanceId": "ci-100",
-      "cardId": "xy1-10",
-      "name": "Slugma",
-      "supertype": "POKEMON"
-    }
-  ],
-  "deckCount": 35,
-  "discardCount": 3,
-  "prizes": [
-    {
-      "slot": 0,
-      "known": false,
-      "card": null
-    }
-  ]
-}
+Returned alongside public state for the requesting player only. Contains:
+
+```
+playerId: UUID
+hand: { instanceId, cardDefinitionId, name, supertype }[]
+deckCount: int
+discardCount: int
+prizes: { slot: int, known: boolean, card: CardDetail | null }[]
 ```
 
 ## Privacy rules

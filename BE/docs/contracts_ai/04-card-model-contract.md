@@ -14,7 +14,8 @@ The game engine must not call the external Pokémon API during a match.
 
 ```
 cards/domain/
-cards/infrastructure/
+repositories/entities/
+repositories/jpa/
 engine/ports/CardLookupPort.java
 ```
 
@@ -86,6 +87,30 @@ Extends CardDefinition.
 
 - required: EnergyType[]
 - provided: EnergyType[]
+
+## CardInstance (engine model)
+
+The engine represents individual card copies via `CardInstance` in `engine/model/`:
+
+```
+instanceId: UUID              (unique copy identifier, generated per match)
+cardDefinitionId: string      (references CardDefinition.id from catalogue)
+```
+
+Constraints:
+- `CardDefinition` lives in `cards/domain/` and is persisted in the relational catalogue (DB).
+- `CardInstance` lives in `engine/model/` and is serialized as part of `GameState` JSON.
+- The engine never queries the catalogue during gameplay; it resolves card details via `CardLookupPort.getCardById()` during setup.
+- In `GameState`, card instances are referenced by their `instanceId` within zone lists (deck, hand, prizes, discard, attachedEnergies).
+
+## CardInstance JSON example
+
+```json
+{
+  "instanceId": "a1b2c3d4-...",
+  "cardDefinitionId": "xy1-10"
+}
+```
 
 ## Card API format
 

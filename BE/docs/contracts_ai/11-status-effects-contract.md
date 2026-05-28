@@ -9,9 +9,11 @@ The TPI requires all five special conditions, their incompatibilities, and betwe
 ## Backend location
 
 ```
-engine/status/StatusEffectManager.java
-engine/model/PokemonInPlay.java
+engine/model/PokemonInPlay.java (specialConditions field)
+engine/attack/AttackResolver.java (status logic as private helper methods)
 ```
+
+No separate `StatusEffectManager` class exists in V1. Between-turn status processing (poison, burn, sleep, paralysis) is handled by private methods within `AttackResolver`, invoked by `TurnManager` during the `BETWEEN_TURNS` phase.
 
 ## Frontend location
 
@@ -62,81 +64,16 @@ All special conditions are removed when the Pokémon:
 - retreats to Bench
 - evolves
 
-## Apply condition event
+## Event strings for status effects
 
-```json
-{
-  "type": "SPECIAL_CONDITION_APPLIED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "turnNumber": 3,
-  "payload": {
-    "pokemonInstanceId": "card-instance-300",
-    "condition": "POISONED",
-    "currentConditions": ["POISONED"]
-  }
-}
-```
+Events are returned as plain strings in `GameActionResponse.events[]`:
 
-## Poison between-turn event
+- `"Froakie took 10 damage from poison."`
+- `"Slugma took 20 damage from burn (tails)."`
+- `"Froakie woke up."`
+- `"Slugma is no longer paralyzed."`
 
-```json
-{
-  "type": "DAMAGE_APPLIED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "turnNumber": 3,
-  "payload": {
-    "source": "POISONED",
-    "targetPokemonInstanceId": "card-instance-300",
-    "damageCountersAdded": 1,
-    "defenderTotalDamageCounters": 7
-  }
-}
-```
-
-## Burn between-turn event
-
-```json
-{
-  "type": "DAMAGE_APPLIED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "turnNumber": 3,
-  "payload": {
-    "source": "BURNED",
-    "coinFlip": "TAILS",
-    "targetPokemonInstanceId": "card-instance-300",
-    "damageCountersAdded": 2,
-    "defenderTotalDamageCounters": 8
-  }
-}
-```
-
-## Asleep between-turn event
-
-```json
-{
-  "type": "SPECIAL_CONDITION_REMOVED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "payload": {
-    "pokemonInstanceId": "card-instance-300",
-    "condition": "ASLEEP",
-    "reason": "COIN_FLIP_HEADS"
-  }
-}
-```
-
-## Paralysis removal event
-
-```json
-{
-  "type": "SPECIAL_CONDITION_REMOVED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "payload": {
-    "pokemonInstanceId": "card-instance-300",
-    "condition": "PARALYZED",
-    "reason": "END_OF_OWNER_TURN"
-  }
-}
-```
+No typed event objects with structured payloads exist in V1.
 
 ## Frontend display
 

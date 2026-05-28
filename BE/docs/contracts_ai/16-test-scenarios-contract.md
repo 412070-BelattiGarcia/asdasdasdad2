@@ -4,7 +4,7 @@
 
 Define required tests and MVP test cases.
 
-The TPI requires unit tests, integration tests, JaCoCo, and specific coverage for RuleValidator, DamageCalculator and StatusEffectManager.
+The TPI requires unit tests, integration tests, JaCoCo, and specific coverage for RuleValidator and AttackResolver.
 
 ## Backend test location
 
@@ -32,16 +32,21 @@ Must test:
 - cannot retreat if ASLEEP
 - cannot retreat if PARALYZED
 
-### DamageCalculator
+### AttackResolver
 
 Must test:
-- base damage only
+- damage calculation: base damage only
 - weakness x2
 - resistance -20
 - minimum damage 0
 - damage counters = final damage / 10
+- energy requirement validation: sufficient types match
+- energy requirement: COLORLESS wildcard matching
+- energy requirement: insufficient energy → rejection
+- confusion self-damage on tails
+- poison/burn between-turn processing (private helper — test via TurnManager integration or direct method call)
 
-### StatusEffectManager
+### Status effects (within AttackResolver)
 
 Must test:
 - POISONED adds 1 damage counter between turns
@@ -142,8 +147,7 @@ Flow:
 Backend:
 - global >= 80%
 - RuleValidator >= 90%
-- DamageCalculator >= 90%
-- StatusEffectManager >= 90%
+- AttackResolver >= 90%
 
 ## Rule
 

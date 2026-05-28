@@ -1,9 +1,11 @@
 package ar.edu.utn.frc.tup.piii.websocket;
 
-import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.ports.EventPublisherPort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class MatchWebSocketPublisher implements EventPublisherPort {
@@ -15,14 +17,8 @@ public class MatchWebSocketPublisher implements EventPublisherPort {
     }
 
     @Override
-    public void publishPublicEvent(GameEvent event) {
-        String destination = "/topic/matches/" + event.getMatchId();
-        messagingTemplate.convertAndSend(destination, event);
-    }
-
-    @Override
-    public void publishPrivateEvent(String playerId, GameEvent event) {
-        String destination = "/queue/matches/" + event.getMatchId() + "/" + playerId;
-        messagingTemplate.convertAndSend(destination, event);
+    public void publishEvents(UUID matchId, List<String> events) {
+        String destination = "/topic/matches/" + matchId;
+        messagingTemplate.convertAndSend(destination, events);
     }
 }

@@ -55,8 +55,7 @@ Every action must validate:
 ### DRAW
 
 Allowed:
-- DRAW_CARD
-- END_TURN only if draw is skipped by first-player-first-turn rule
+- END_TURN (only if draw was already auto-resolved by TurnManager — DRAW phase is automatic in V1, no DRAW_CARD action)
 
 ### MAIN
 
@@ -114,7 +113,27 @@ Reject if:
 - hasRetreated is true
 - Active Pokémon is ASLEEP or PARALYZED
 - player has no Benched Pokémon
-- insufficient Energy cards selected for retreat cost
+- insufficient Energy cards discarded for retreat cost
+
+### Evolve Pokémon
+
+Reject if:
+- not MAIN phase
+- card is not in player's hand
+- card is not a Pokémon (PokémonStage)
+- target Pokémon is not in play (Active or Bench)
+- target Pokémon does not evolve from the specified `evolvesFrom`
+- target Pokémon was placed or evolved this turn (`evolvedThisTurn == true`)
+- same evolution chain was already used this turn (one evolution per Pokémon per turn)
+- bench slot or active slot matches the Pokémon being evolved
+
+### Play Trainer
+
+Reject if:
+- not MAIN phase
+- card is not a Trainer
+- card is not in player's hand
+- if SUPPORTER: `hasPlayedSupporter` must be false
 
 ## Error response format
 

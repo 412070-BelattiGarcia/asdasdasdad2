@@ -80,6 +80,21 @@ Deck Builder must use set xy1 for the required base version.
 }
 ```
 
+## DeckLoadPort (engine port)
+
+```java
+package ar.edu.utn.frc.tup.piii.engine.ports;
+
+public interface DeckLoadPort {
+  Deck loadDeck(UUID deckId);
+}
+```
+
+- Created by Persona 4 (engine) as an interface stub.
+- Implemented by Persona B (catálogo) in `engine/ports/impl/DeckLoadAdapter.java`.
+- `loadDeck` must validate the deck via `DeckValidator` before returning.
+- The engine never calls `DeckValidator` directly; validation is guaranteed by the adapter.
+
 ## Seed deck types
 
 The MVP requires at least two seed decks:

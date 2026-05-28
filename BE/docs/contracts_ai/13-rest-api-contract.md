@@ -7,9 +7,9 @@ Define REST endpoints and JSON formats.
 ## Backend location
 
 ```
-matches/api/
-cards/api/
-decks/api/
+controllers/matches/
+controllers/cards/
+controllers/decks/
 ```
 
 ## Frontend location
@@ -43,9 +43,13 @@ core/api/
 - `POST /api/matches/{matchId}/actions`
 - `GET /api/cards`
 - `GET /api/cards/{cardId}`
-- `GET /api/decks/seed`
+- `POST /api/cards/sync`
+- `POST /api/decks`
 - `GET /api/decks/{deckId}`
-- `POST /api/decks/validate`
+- `PUT /api/decks/{deckId}`
+- `DELETE /api/decks/{deckId}`
+- `GET /api/decks?playerId={id}`
+- `POST /api/decks/{deckId}/validate`
 
 ## POST /api/matches
 
@@ -105,7 +109,7 @@ Request:
   "type": "ATTACH_ENERGY",
   "playerId": "player-1",
   "payload": {
-    "energyCardInstanceId": "card-instance-502",
+    "handIndex": 2,
     "targetPokemonInstanceId": "card-instance-100"
   },
   "clientRequestId": "client-req-003"
@@ -119,7 +123,9 @@ Response:
   "clientRequestId": "client-req-003",
   "publicState": {},
   "privateState": {},
-  "events": [],
+  "events": [
+    "Santi attached Fire Energy to Slugma."
+  ],
   "error": null
 }
 ```
@@ -150,7 +156,44 @@ Response:
 }
 ```
 
-## GET /api/decks/seed
+## POST /api/cards/sync
+
+Triggers manual card cache synchronization. No request body.
+
+Response:
+```json
+{
+  "success": true,
+  "message": "Sync completed.",
+  "newCards": 147,
+  "updatedCards": 0
+}
+```
+
+## GET /api/decks/{deckId}
+
+Response:
+```json
+{
+  "id": "seed-fire-deck",
+  "name": "Seed Fire Deck",
+  "ownerPlayerId": null,
+  "source": "SEED",
+  "totalCards": 60,
+  "valid": true,
+  "cards": [
+    {
+      "cardId": "xy1-10",
+      "name": "Slugma",
+      "quantity": 4,
+      "supertype": "POKEMON",
+      "isBasicEnergy": false
+    }
+  ]
+}
+```
+
+## GET /api/decks?playerId={id}
 
 Response:
 ```json
@@ -161,30 +204,44 @@ Response:
       "name": "Seed Fire Deck",
       "valid": true,
       "totalCards": 60
-    },
-    {
-      "id": "seed-water-deck",
-      "name": "Seed Water Deck",
-      "valid": true,
-      "totalCards": 60
     }
   ]
 }
 ```
 
-## POST /api/decks/validate
+## POST /api/decks
 
 Request:
 ```json
 {
+  "name": "My Fire Deck",
+  "playerId": "player-1",
   "cards": [
-    {
-      "cardId": "xy1-10",
-      "quantity": 4
-    }
+    { "cardId": "xy1-10", "quantity": 4 },
+    { "cardId": "energy-fire-basic", "quantity": 18 }
   ]
 }
 ```
+
+Response:
+```json
+{
+  "id": "deck-uuid",
+  "name": "My Fire Deck",
+  "valid": true,
+  "totalCards": 60
+}
+```
+
+## PUT /api/decks/{deckId}
+
+Same body format as POST. Replaces the entire deck.
+
+## DELETE /api/decks/{deckId}
+
+Response: `204 No Content`
+
+## POST /api/decks/{deckId}/validate
 
 Response:
 ```json
@@ -195,7 +252,7 @@ Response:
       "code": "DECK_SIZE_INVALID",
       "message": "El mazo debe tener exactamente 60 cartas.",
       "details": {
-        "currentSize": 4,
+        "currentSize": 55,
         "requiredSize": 60
       }
     }

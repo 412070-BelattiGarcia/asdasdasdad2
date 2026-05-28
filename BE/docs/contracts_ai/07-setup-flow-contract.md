@@ -7,9 +7,8 @@ Define match creation and initial setup.
 ## Backend location
 
 ```
-engine/setup/
-engine/GameEngine.java
-matches/application/
+engine/setup/SetupManager.java
+services/matches/MatchApplicationService.java
 ```
 
 ## Frontend location
@@ -104,21 +103,31 @@ Manual setup can be added later.
 }
 ```
 
-## Mulligan event
+## Mulligan resolution
 
-```json
-{
-  "type": "MULLIGAN_DECLARED",
-  "matchId": "9a747f90-b50e-49df-9d8a-456c9796aa11",
-  "playerId": "player-2",
-  "mulliganCount": 1,
-  "opponentMayDrawCards": 1
-}
-```
+Mulligan logic is internal to `SetupManager.setup()`. Steps:
+1. After dealing 7 cards, check if player has at least one Basic Pokémon.
+2. If not, reveal hand to opponent, shuffle back into deck, re-deal 7 cards.
+3. Opponent may draw +1 card per mulligan declared.
+4. Repeat until both players have at least one Basic Pokémon.
+
+No separate `MulliganService` class exists. Mulligan is a private method within `SetupManager`.
+
+The `SetupManager.setup()` method handles:
+- deck load via `DeckLoadPort`
+- shuffle via `RandomizerPort`
+- deal 7 cards
+- mulligan resolution
+- both sides automatically choose first Basic Pokémon in hand as Active
+- auto-fill bench with remaining Basic Pokémon (up to 5)
+- create 6 Prize cards per player
+- coin flip for first player
+- mark setup complete → status becomes ACTIVE
 
 ## Setup invariants
 
 - Each player must have exactly 1 Active Pokémon before ACTIVE status
 - Bench size must be between 0 and 5
 - Prize count must be 6 unless sudden death
-- Hand, deck, prize and discard zones must contain unique card instance IDs
+- Hand, deck, prize and discard zones must contain unique CardInstance IDs
+- No CHOOSE_KNOCKOUT_REPLACEMENT action exists; during setup, Active is chosen automatically

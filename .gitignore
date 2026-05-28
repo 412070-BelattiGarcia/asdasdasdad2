@@ -66,4 +66,7 @@ desktop.ini
 
 # Temporary files
 tmp/
-temp/
+temp/.opencode/plans/
+.opencode/plans/
+BE/.mvn/
+BE/docs/api_doc/swagger.json

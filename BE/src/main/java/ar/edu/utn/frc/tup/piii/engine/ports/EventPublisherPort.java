@@ -1,8 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine.ports;
 
-import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
+import java.util.List;
+import java.util.UUID;
 
 public interface EventPublisherPort {
-    void publishPublicEvent(GameEvent event);
-    void publishPrivateEvent(String playerId, GameEvent event);
+    void publishEvents(UUID matchId, List<String> events);
 }

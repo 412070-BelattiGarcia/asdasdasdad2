@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.repositories.entities.CardResistanceEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardWeaknessEntity;
 import ar.edu.utn.frc.tup.piii.repositories.jpa.CardJpaRepository;
 import ar.edu.utn.frc.tup.piii.engine.ports.CardLookupPort;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -24,6 +25,7 @@ public class CardLookupAdapter implements CardLookupPort {
     }
 
     @Override
+    @Cacheable(value = "cards", key = "#cardId")
     public CardDefinition getCardById(String cardId) {
         Optional<CardEntity> optional = cardJpaRepository.findById(cardId);
         if (optional.isEmpty()) {

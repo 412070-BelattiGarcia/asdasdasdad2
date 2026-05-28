@@ -10,10 +10,10 @@ Do not create duplicated enum types.
 ## Backend location
 
 ```
-backend/src/main/java/com/pokemontcg/engine/
-backend/src/main/java/com/pokemontcg/cards/domain/
-backend/src/main/java/com/pokemontcg/decks/domain/
-backend/src/main/java/com/pokemontcg/matches/domain/
+ar.edu.utn.frc.tup.piii.engine/
+ar.edu.utn.frc.tup.piii.cards/domain/
+ar.edu.utn.frc.tup.piii.decks/domain/
+ar.edu.utn.frc.tup.piii.matches/domain/
 ```
 
 ## Frontend location
@@ -57,6 +57,18 @@ frontend/src/app/shared/models/
 
 MEGA and RESTORED are not required in MVP gameplay, but may exist in card data.
 
+## EnergyCardType
+
+- BASIC
+- SPECIAL
+
+## TrainerSubtype
+
+- ITEM
+- SUPPORTER
+- STADIUM
+- ACE_SPEC
+
 ## EnergyType
 
 - GRASS
@@ -74,7 +86,7 @@ MEGA and RESTORED are not required in MVP gameplay, but may exist in card data.
 
 - ITEM
 - STADIUM
-- SUPPORER
+- SUPPORTER
 
 ## SpecialCondition
 
@@ -86,7 +98,6 @@ MEGA and RESTORED are not required in MVP gameplay, but may exist in card data.
 
 ## GameActionType
 
-- DRAW_CARD
 - PUT_BASIC_ON_BENCH
 - ATTACH_ENERGY
 - EVOLVE_POKEMON
@@ -94,30 +105,16 @@ MEGA and RESTORED are not required in MVP gameplay, but may exist in card data.
 - RETREAT_ACTIVE
 - DECLARE_ATTACK
 - END_TURN
-- CHOOSE_KNOCKOUT_REPLACEMENT
-- USE_ABILITY
 
-## GameEventType
+## Event strings (inline in GameActionResponse)
 
-- MATCH_CREATED
-- PLAYER_JOINED
-- SETUP_COMPLETED
-- TURN_STARTED
-- PHASE_CHANGED
-- CARD_DRAWN
-- POKEMON_PLACED_ON_BENCH
-- ENERGY_ATTACHED
-- POKEMON_EVOLVED
-- TRAINER_PLAYED
-- RETREAT_EXECUTED
-- ATTACK_DECLARED
-- DAMAGE_APPLIED
-- SPECIAL_CONDITION_APPLIED
-- SPECIAL_CONDITION_REMOVED
-- KNOCKOUT_OCCURRED
-- PRIZE_TAKEN
-- VICTORY_DECIDED
-- STATE_UPDATED
+Events are plain descriptive strings returned in `GameActionResponse.events[]`. No `GameEventType` enum exists in V1.
+
+Examples:
+- "Santi attached Fire Energy to Slugma."
+- "Slugma dealt 30 damage to Froakie."
+- "Froakie was Knocked Out."
+- "Santi took 1 Prize card."
 
 ## FinishReason
 
