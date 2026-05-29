@@ -1,18 +1,18 @@
 # AI Proposal Spec: card-catalog-person-2
 
-## Change name
+## Spec name
 
 card-catalog-person-2
 
 ## Purpose
 
-Definir el trabajo de **Persona B** para el módulo de catálogo de cartas y mazos, con foco en validación de mazos, CRUD de decks y el adapter de carga para el engine.
+Define the work for the deck management role within the card catalog and deck module, focusing on deck validation, deck CRUD, and the engine deck-loading adapter.
 
-Este cambio debe seguir la división indicada en `/divisionCatalogo.md` y respetar las reglas de `/openspec/config.yaml`.
+This change must follow the division defined in `/divisionCatalogo.md` and respect the rules in `/openspec/config.yaml`.
 
 ## Mandatory context files
 
-OpenCode MUST read and obey:
+OpenSpec MUST read and obey:
 
 - `/openspec/config.yaml`
 - `/docs/contracts_ai/00-contract-index.md`
@@ -46,113 +46,116 @@ OpenCode MUST read and obey:
 ar.edu.utn.frc.tup.piii
 ```
 
-## Scope — clases a implementar o verificar
+## Scope — classes to implement or verify
 
-Todas viven bajo `BE/src/main/java/ar/edu/utn/frc/tup/piii/`.
+All live under `BE/src/main/java/ar/edu/utn/frc/tup/piii/`.
 
 ### services/decks/
 
-| Clase | Estado actual | Acción |
+| Class | Current State | Action |
 |-------|--------------|--------|
-| `DeckService` | Stub existente | Completar |
-| `DeckValidator` | Stub existente | Completar |
-| `SeedDeckService` | Stub existente | Completar solo para dev/testing |
+| `DeckService` | Existing stub | Complete |
+| `DeckValidator` | Existing stub | Complete |
+| `SeedDeckService` | Existing stub | Complete only for dev/testing |
 
 ### controllers/decks/
 
-| Clase | Estado actual | Acción |
+| Class | Current State | Action |
 |-------|--------------|--------|
-| `DeckController` | Stub existente | Completar |
+| `DeckController` | Existing stub | Complete |
 
 ### mappers/
 
-| Clase | Estado actual | Acción |
+| Class | Current State | Action |
 |-------|--------------|--------|
-| `DeckMapper` | No existe | Crear |
+| `DeckMapper` | Does not exist | Create |
 
 ### engine/ports/impl/
 
-| Clase | Estado actual | Acción |
+| Class | Current State | Action |
 |-------|--------------|--------|
-| `DeckLoadAdapter` | No existe | Crear |
+| `DeckLoadAdapter` | Does not exist | Create |
 
 ## Requirements
 
 ### Requirement 1 — Deck validation must be reusable
 
-El sistema MUST validar mazos con la misma lógica desde REST y desde el engine.
+The system MUST validate decks with the same logic from REST and from the engine.
+
+The shared logic MUST live in `services/decks/DeckValidator` and be consumed by both `DeckService` and `DeckLoadAdapter`.
 
 #### Scenarios
 
-- Given un mazo con 60 cartas, máximo 4 copias por `cardId` y al menos un Pokémon básico, When se llama a la validación, Then el resultado debe ser válido.
-- Given un mazo con menos de 60 cartas, When se llama a la validación, Then el resultado debe indicar que el mazo es inválido.
-- Given un mazo con más de 4 copias de una misma carta, When se llama a la validación, Then el resultado debe indicar infracción por duplicados.
+- Given a deck with exactly 60 cards, at most 4 copies per `cardId`, and at least one Basic Pokémon, When validation runs, Then the result must be valid.
+- Given a deck with fewer than 60 cards, When validation runs, Then the result must indicate the deck is invalid.
+- Given a deck with more than 4 copies of the same card, When validation runs, Then the result must indicate a duplicate-copy violation.
 
 ### Requirement 2 — DeckService must manage deck CRUD
 
-El sistema MUST exponer la lógica de creación, lectura, actualización, eliminación y listado de mazos de un jugador.
+The system MUST expose deck creation, retrieval, update, deletion, and player deck listing logic.
 
 #### Scenarios
 
-- Given un `CreateDeckRequest` válido, When `createDeck` se ejecuta, Then el mazo debe persistirse.
-- Given un `deckId` existente, When `getDeck` se ejecuta, Then debe devolver el mazo correspondiente.
-- Given un `UpdateDeckRequest` inválido, When `updateDeck` se ejecuta, Then debe rechazar la operación.
-- Given un `playerId`, When `listDecksByPlayer` se ejecuta, Then debe devolver solo los mazos de ese jugador.
+- Given a valid `CreateDeckRequest`, When `createDeck` executes, Then the deck must be persisted.
+- Given an existing `deckId`, When `getDeck` executes, Then it must return the corresponding deck.
+- Given an invalid `UpdateDeckRequest`, When `updateDeck` executes, Then it must reject the operation.
+- Given a `playerId`, When `listDecksByPlayer` executes, Then it must return only that player's decks.
 
 ### Requirement 3 — DeckController must expose deck endpoints
 
-El sistema MUST exponer endpoints REST para CRUD y validación de mazos.
+The system MUST expose REST endpoints for deck CRUD and validation.
 
 #### Scenarios
 
-- Given una request `POST /api/decks`, When el payload es válido, Then el controlador debe crear el mazo.
-- Given una request `GET /api/decks/{id}`, When el mazo existe, Then el controlador debe devolver su detalle.
-- Given una request `POST /api/decks/{id}/validate`, When el mazo existe, Then el controlador debe devolver la validación.
+- Given a `POST /api/decks` request, When the payload is valid, Then the controller must create the deck.
+- Given a `GET /api/decks/{id}` request, When the deck exists, Then the controller must return its details.
+- Given a `POST /api/decks/{id}/validate` request, When the deck exists, Then the controller must return validation results.
 
 ### Requirement 4 — DeckLoadAdapter must load decks for the engine
 
-El sistema MUST implementar `DeckLoadPort.loadDeck(UUID deckId)` mediante `DeckLoadAdapter`.
+The system MUST implement `DeckLoadPort.loadDeck(UUID deckId)` through `DeckLoadAdapter`.
 
 #### Scenarios
 
-- Given un `deckId` existente, When el engine solicita el mazo, Then el adapter debe devolver el dominio `Deck`.
-- Given un mazo inválido persistido por error, When `DeckLoadAdapter` lo carga, Then debe validarlo antes de entregarlo al engine.
-- Given un `deckId` inexistente, When `loadDeck` se ejecuta, Then el adapter debe resolver el caso como error de carga.
+- Given an existing `deckId`, When the engine requests the deck, Then the adapter must return the `Deck` domain object.
+- Given an invalid deck persisted by mistake, When `DeckLoadAdapter` loads it, Then it must fail with a controlled validation error and not hand it to the engine.
+- Given a missing `deckId`, When `loadDeck` executes, Then the adapter must fail with a controlled load error.
 
 ### Requirement 5 — SeedDeckService is optional for dev/testing
 
-El sistema SHOULD permitir crear mazos semilla solo para desarrollo o testing.
+The system SHOULD allow seed decks only for development or testing.
 
 #### Scenarios
 
-- Given el perfil `dev` activo, When arranca la aplicación, Then `SeedDeckService` puede precargar mazos.
-- Given un perfil no dev, When arranca la aplicación, Then no debe ejecutarse la carga semilla.
+- Given the `dev` profile is active, When the application starts, Then `SeedDeckService` may preload decks.
+- Given a non-dev profile, When the application starts, Then seed loading must not run.
 
 ## Explicit non-goals
 
-No implementar en este change:
+Do not implement in this change:
 
-- Lógica externa de catálogo de cartas.
-- Sincronización con la API Pokémon TCG.
+- External card catalog logic.
+- Synchronization with the Pokémon TCG API.
 - `CardLookupAdapter`.
-- Engine, `GameEngine` o handlers de acciones.
-- Autenticación, JWT, ranking, chat o animaciones.
-- Nuevas expansiones o reglas fuera del MVP.
+- Engine, `GameEngine`, or action handlers.
+- Authentication, JWT, ranking, chat, or animations.
+- New expansions or rules outside the MVP.
 
 ## Verification requirements
 
-El change MUST terminar con:
+The change MUST end with:
 
-1. `mvn compile` dentro de `BE/` sin errores.
-2. `mvn test` dentro de `BE/` sin fallos.
-3. Verificación de que `DeckLoadAdapter` solo usa el engine a través de la interfaz `DeckLoadPort`.
+1. `mvn compile` inside `BE/` without errors.
+2. `mvn test` inside `BE/` without failures.
+3. Verification that `DeckLoadAdapter` implements `DeckLoadPort` and keeps deck loading decoupled from the internal engine.
 
-## Expected output
+## Implementation targets
 
-Generar este OpenSpec spec en:
+The implementation generated from this spec should cover:
 
-```
-openspec/specs/card-catalog-person-2.md
-```
-
-El archivo debe quedar listo para que OpenCode implemente el alcance de Persona B sin extenderse a otras personas del reparto.
+- `services/decks/DeckService`
+- `services/decks/DeckValidator`
+- `services/decks/SeedDeckService`
+- `controllers/decks/DeckController`
+- `mappers/DeckMapper`
+- `engine/ports/impl/DeckLoadAdapter`
