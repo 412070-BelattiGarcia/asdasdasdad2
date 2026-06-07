@@ -203,14 +203,14 @@ El editor SHALL validar y guardar usando `DeckApiService`.
 - **THEN** the system SHALL show a snackbar and remain on the page
 
 ### Requirement: Layout adapts to mobile
-La página de builder SHALL usar dos paneles en desktop y apilado en mobile, siguiendo el breakpoint mobile del diseño responsive del proyecto (600px).
+La página de builder SHALL usar dos paneles en desktop y apilado en mobile, siguiendo el breakpoint mobile definido por la UI del proyecto.
 
 #### Scenario: Wide screen
 - **WHEN** the viewport is 600px or wider
 - **THEN** the search and builder panels SHALL render side by side
 
 #### Scenario: Mobile screen
-- **WHEN** the viewport is below 600px
+- **WHEN** the viewport is in mobile size
 - **THEN** the panels SHALL stack vertically with search on top
 
 ## Non-goals
