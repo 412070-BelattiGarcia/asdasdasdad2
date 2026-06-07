@@ -62,7 +62,7 @@ La página de mazos SHALL permitir cargar la lista de mazos por `playerId` usand
 
 #### Scenario: Empty playerId
 - **WHEN** the user leaves the field empty
-- **THEN** the system SHALL use `player-dev` as fallback
+- **THEN** the system SHALL use the configured development default player id (`player-dev` in local development)
 
 #### Scenario: Empty result
 - **WHEN** the service returns an empty list
@@ -206,7 +206,7 @@ El editor SHALL validar y guardar usando `DeckApiService`.
 La página de builder SHALL usar dos paneles en desktop y apilado en mobile, siguiendo el breakpoint mobile definido por la UI del proyecto.
 
 #### Scenario: Wide screen
-- **WHEN** the viewport is 600px or wider
+- **WHEN** the viewport is wide enough for the desktop layout
 - **THEN** the search and builder panels SHALL render side by side
 
 #### Scenario: Mobile screen
