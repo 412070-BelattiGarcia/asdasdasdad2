@@ -14,6 +14,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Entity
 @Table(name = "pokemon_card_weaknesses")
+@Deprecated
 public class PokemonCardWeaknessEntity {
 
     @Id

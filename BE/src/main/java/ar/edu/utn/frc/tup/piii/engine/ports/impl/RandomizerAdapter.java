@@ -31,6 +31,16 @@ public class RandomizerAdapter implements RandomizerPort {
     }
 
     @Override
+    public <T> void shuffle(List<T> items) {
+        for (int i = items.size() - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            T temp = items.get(i);
+            items.set(i, items.get(j));
+            items.set(j, temp);
+        }
+    }
+
+    @Override
     public int nextInt(int bound) {
         return random.nextInt(bound);
     }

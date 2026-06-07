@@ -8,4 +8,11 @@ export const cardRoutes: Routes = [
         (m) => m.CardCatalogPage,
       ),
   },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./pages/card-detail-page/card-detail-page').then(
+        (m) => m.CardDetailPage,
+      ),
+  },
 ];

@@ -16,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @Table(name = "pokemon_cards")
+@Deprecated
 public class PokemonCardEntity {
 
     @Id

@@ -6,9 +6,17 @@ card-catalog-person-2
 
 ## Purpose
 
-Define the work for the deck management role within the card catalog and deck module, focusing on deck validation, deck CRUD, and the engine deck-loading adapter.
+Define the work for **Persona B** within the backend card catalog / deck module, covering:
 
-This change must follow the division defined in `/divisionCatalogo.md` and respect the rules in `/openspec/config.yaml`.
+- deck CRUD
+- deck validation
+- deck loading adapter for the engine
+- optional seed decks for development/testing
+- mapping between deck entities, DTOs, and domain models
+
+This spec is intentionally limited to the **deck module** and must not touch the external card catalog API synchronization, the engine internals, or any future features outside the MVP.
+
+---
 
 ## Mandatory context files
 
@@ -30,132 +38,242 @@ OpenSpec MUST read and obey:
 - `/docs/contracts_ai/14-websocket-contract.md`
 - `/docs/contracts_ai/15-frontend-state-contract.md`
 - `/docs/contracts_ai/16-test-scenarios-contract.md`
-- `/divisionCatalogo.md`
 - `/openspec/specs/engine-persona1-contracts-and-gameengine.md`
+
+---
 
 ## Architecture constraints
 
 - Backend is the source of truth for deck validation and deck loading.
 - Frontend only consumes server state and does not enforce deck rules.
-- `DeckLoadAdapter` must stay isolated from Spring/JPA details except for repository access through the adapter implementation.
+- `DeckLoadAdapter` must remain isolated from Spring/JPA details except for repository access through the adapter implementation.
+- `DeckValidator` must be reusable from both REST services and the engine adapter.
 - No postponed features should be implemented: auth, JWT, ranking, chat, animations, multiple expansions, Mega Evolution.
+- Do not modify engine interfaces; only implement against the existing `DeckLoadPort`.
+- Do not introduce catalog synchronization, card lookup, or external API integration.
+
+---
 
 ## Package root
 
-```
+```txt
 ar.edu.utn.frc.tup.piii
 ```
 
-## Scope — classes to implement or verify
+## Scope — Classes to Implement or Verify
 
 All live under `BE/src/main/java/ar/edu/utn/frc/tup/piii/`.
 
 ### services/decks/
-
-| Class | Current State | Action |
-|-------|--------------|--------|
-| `DeckService` | Existing stub | Complete |
-| `DeckValidator` | Existing stub | Complete |
-| `SeedDeckService` | Existing stub | Complete only for dev/testing |
+| Class           | Current State   | Action                        |
+|-----------------|-----------------|-------------------------------|
+| DeckService     | Existing stub   | Complete                      |
+| DeckValidator   | Existing stub   | Complete                      |
+| SeedDeckService | Existing stub   | Complete only for dev/testing |
 
 ### controllers/decks/
-
-| Class | Current State | Action |
-|-------|--------------|--------|
-| `DeckController` | Existing stub | Complete |
+| Class          | Current State   | Action   |
+|----------------|-----------------|----------|
+| DeckController | Existing stub   | Complete |
 
 ### mappers/
-
-| Class | Current State | Action |
-|-------|--------------|--------|
-| `DeckMapper` | Does not exist | Create |
+| Class      | Current State   | Action |
+|------------|-----------------|--------|
+| DeckMapper | Does not exist  | Create |
 
 ### engine/ports/impl/
+| Class           | Current State   | Action |
+|-----------------|-----------------|--------|
+| DeckLoadAdapter | Does not exist  | Create |
 
-| Class | Current State | Action |
-|-------|--------------|--------|
-| `DeckLoadAdapter` | Does not exist | Create |
+---
 
-## Requirements
+## Available Domain / Persistence / DTO Context
 
-### Requirement 1 — Deck validation must be reusable
+- **DTOs already exist**
+    - DeckResponse
+    - DeckCardResponse
+    - CreateDeckRequest
+    - UpdateDeckRequest
+    - DeckValidationResponse
 
-The system MUST validate decks with the same logic from REST and from the engine.
+- **Domain models already exist**
+    - Deck
+    - DeckCard
+    - DeckValidationResult
+    - DeckValidationError
 
-The shared logic MUST live in `services/decks/DeckValidator` and be consumed by both `DeckService` and `DeckLoadAdapter`.
+- **Entities already exist**
+    - DeckEntity
+    - DeckCardEntity
 
-#### Scenarios
+- **Repositories already exist**
+    - DeckJpaRepository
+    - DeckCardJpaRepository
 
-- Given a deck with exactly 60 cards, at most 4 copies per `cardId`, and at least one Basic Pokémon, When validation runs, Then the result must be valid.
-- Given a deck with fewer than 60 cards, When validation runs, Then the result must indicate the deck is invalid.
-- Given a deck with more than 4 copies of the same card, When validation runs, Then the result must indicate a duplicate-copy violation.
+- **Engine interface already exists**
+    - `engine/ports/DeckLoadPort`
+    - Persona B must implement `DeckLoadAdapter`, but must not create or modify `DeckLoadPort`.
 
-### Requirement 2 — DeckService must manage deck CRUD
+---
 
-The system MUST expose deck creation, retrieval, update, deletion, and player deck listing logic.
+## Functional Requirements
 
-#### Scenarios
+### Requirement 1 — Shared Deck Validation
+- Validation logic must be reusable by REST services and the engine adapter.
+- Must live in `services/decks/DeckValidator`.
 
-- Given a valid `CreateDeckRequest`, When `createDeck` executes, Then the deck must be persisted.
-- Given an existing `deckId`, When `getDeck` executes, Then it must return the corresponding deck.
-- Given an invalid `UpdateDeckRequest`, When `updateDeck` executes, Then it must reject the operation.
-- Given a `playerId`, When `listDecksByPlayer` executes, Then it must return only that player's decks.
+**Validation rules V1**
+- Exactly 60 cards.
+- No card repeated more than 4 times by cardId.
+- At least one Basic Pokémon.
 
-### Requirement 3 — DeckController must expose deck endpoints
+**Additional expectations**
+- Return structured errors, not just boolean.
+- Deterministic and reusable.
+- Invalid persisted decks must be rejected before reaching the engine.
 
-The system MUST expose REST endpoints for deck CRUD and validation.
+**Scenarios**
+- Valid deck → result valid.
+- <60 cards → invalid.
+- >4 copies of same card → duplicate violation.
+- No Basic Pokémon → missing-basic violation.
 
-#### Scenarios
+---
 
-- Given a `POST /api/decks` request, When the payload is valid, Then the controller must create the deck.
-- Given a `GET /api/decks/{id}` request, When the deck exists, Then the controller must return its details.
-- Given a `POST /api/decks/{id}/validate` request, When the deck exists, Then the controller must return validation results.
+### Requirement 2 — DeckService CRUD
+- Expose logic for create, retrieve, update, delete, list by player, and validate.
 
-### Requirement 4 — DeckLoadAdapter must load decks for the engine
+**Behaviors**
+- `createDeck(CreateDeckRequest)` → validate, persist valid, reject invalid.
+- `getDeck(UUID deckId)` → return deck or fail clearly.
+- `updateDeck(UUID deckId, UpdateDeckRequest)` → update, revalidate, reject invalid.
+- `deleteDeck(UUID deckId)` → remove deck + cards.
+- `listDecksByPlayer(UUID playerId)` → return only player’s decks.
+- `validateDeck(UUID deckId)` → return `DeckValidationResponse`.
 
-The system MUST implement `DeckLoadPort.loadDeck(UUID deckId)` through `DeckLoadAdapter`.
+**Scenarios**
+- Valid create → persisted.
+- Existing deckId → returned.
+- Invalid update → rejected.
+- PlayerId → only that player’s decks.
 
-#### Scenarios
+---
 
-- Given an existing `deckId`, When the engine requests the deck, Then the adapter must return the `Deck` domain object.
-- Given an invalid deck persisted by mistake, When `DeckLoadAdapter` loads it, Then it must fail with a controlled validation error and not hand it to the engine.
-- Given a missing `deckId`, When `loadDeck` executes, Then the adapter must fail with a controlled load error.
+### Requirement 3 — DeckController Endpoints
+Expose REST endpoints:
 
-### Requirement 5 — SeedDeckService is optional for dev/testing
+- `POST /api/decks`
+- `GET /api/decks/{id}`
+- `PUT /api/decks/{id}`
+- `DELETE /api/decks/{id}`
+- `GET /api/decks?playerId={id}`
+- `POST /api/decks/{id}/validate`
 
-The system SHOULD allow seed decks only for development or testing.
+**Behavior**
+- Proper HTTP codes.
+- Thin controller, delegate to service.
+- Use `DeckMapper` for mapping.
 
-#### Scenarios
+**Scenarios**
+- Valid POST → deck created.
+- GET existing → return details.
+- POST validate → return validation results.
 
-- Given the `dev` profile is active, When the application starts, Then `SeedDeckService` may preload decks.
-- Given a non-dev profile, When the application starts, Then seed loading must not run.
+---
 
-## Explicit non-goals
+### Requirement 4 — DeckLoadAdapter
+Implements `DeckLoadPort.loadDeck(UUID deckId)`.
 
-Do not implement in this change:
+**Behavior**
+- Read deck from repository.
+- Map entity → domain.
+- Validate before returning.
+- Fail controlled if deck missing or invalid.
 
-- External card catalog logic.
-- Synchronization with the Pokémon TCG API.
-- `CardLookupAdapter`.
-- Engine, `GameEngine`, or action handlers.
-- Authentication, JWT, ranking, chat, or animations.
-- New expansions or rules outside the MVP.
+**Critical rule**
+- Must call `DeckValidator.validate()` before returning.
 
-## Verification requirements
+**Scenarios**
+- Existing deck → return domain object.
+- Invalid persisted deck → controlled validation error.
+- Missing deck → controlled load error.
 
-The change MUST end with:
+---
 
-1. `mvn compile` inside `BE/` without errors.
-2. `mvn test` inside `BE/` without failures.
-3. Verification that `DeckLoadAdapter` implements `DeckLoadPort` and keeps deck loading decoupled from the internal engine.
+### Requirement 5 — SeedDeckService (Optional)
+- Only for dev/testing.
+- Must not run in production.
 
-## Implementation targets
+**Scenarios**
+- Dev profile active → preload decks.
+- Non-dev profile → no seeding.
 
-The implementation generated from this spec should cover:
+---
 
+## Mapping Requirements
+**DeckMapper MUST support:**
+- DeckEntity → DeckResponse
+- CreateDeckRequest → DeckEntity
+- UpdateDeckRequest → entity update flow
+- DeckEntity → Deck domain model
+- DeckCardEntity → DeckCard domain model
+
+Centralize conversion logic to keep controller/service thin.
+
+---
+
+## Validation & Error Handling
+- Failures → structured domain results.
+- No duplication of validation logic.
+- Missing decks → controlled exceptions.
+- Invalid decks → deterministic output.
+- Engine load → never bypass validation.
+
+---
+
+## Non-Goals
+Do not implement:
+- External catalog sync.
+- Pokémon TCG API client.
+- Card search/lookup adapter.
+- Engine logic beyond deck loading.
+- GameEngine, match persistence.
+- Auth/JWT, ranking, chat, animations.
+- New expansions/rules outside MVP.
+- Changes to `DeckLoadPort`.
+
+---
+
+## RFs Covered
+- RF-5: save/query/delete custom decks.
+- RF-6: create game with validated deck.
+- RF-9: implement DeckLoadPort.
+- RF-11: keep contracts decoupled from engine internals.
+
+---
+
+## Verification Requirements
+- `mvn compile` inside BE/ → no errors.
+- `mvn test` inside BE/ → no failures.
+- Confirm `DeckLoadAdapter` implements `DeckLoadPort`.
+- Confirm validation shared between REST and engine.
+
+---
+
+## Implementation Targets
 - `services/decks/DeckService`
 - `services/decks/DeckValidator`
 - `services/decks/SeedDeckService`
 - `controllers/decks/DeckController`
 - `mappers/DeckMapper`
 - `engine/ports/impl/DeckLoadAdapter`
+
+---
+
+## Notes for OpenSpec
+- Persona B is responsible for deck management only.
+- DeckValidator is shared, not duplicated
+
+
+

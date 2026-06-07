@@ -8,10 +8,7 @@ public enum GameActionType {
     RETREAT_ACTIVE,
     DECLARE_ATTACK,
     END_TURN,
-    @Deprecated
     DRAW_CARD,
-    @Deprecated
     CHOOSE_KNOCKOUT_REPLACEMENT,
-    @Deprecated
-    USE_ABILITY
+    TAKE_PRIZE_CARD
 }

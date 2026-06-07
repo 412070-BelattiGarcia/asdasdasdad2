@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.services.cards;
 
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardSearchRequest;
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardSearchResponse;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardSummaryResponse;
 import ar.edu.utn.frc.tup.piii.exceptions.NotFoundException;
 import ar.edu.utn.frc.tup.piii.mappers.cards.CardMapper;
@@ -26,7 +27,7 @@ public class CardCatalogService {
     private final CardJpaRepository cardJpaRepository;
     private final CardMapper cardMapper;
 
-    public Page<CardSummaryResponse> searchCards(CardSearchRequest request) {
+    public CardSearchResponse searchCards(CardSearchRequest request) {
         int page = request.page() != null ? request.page() : 0;
         int size = request.size() != null ? request.size() : 20;
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
@@ -40,7 +41,7 @@ public class CardCatalogService {
             }
 
             if (request.supertype() != null && !request.supertype().isBlank()) {
-                predicates.add(cb.equal(root.get("supertype"), request.supertype()));
+                predicates.add(cb.equal(cb.upper(root.get("supertype")), request.supertype().toUpperCase()));
             }
 
             if (request.setCode() != null && !request.setCode().isBlank()) {
@@ -50,8 +51,9 @@ public class CardCatalogService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return cardJpaRepository.findAll(spec, pageable)
+        Page<CardSummaryResponse> resultPage = cardJpaRepository.findAll(spec, pageable)
                 .map(cardMapper::toSummaryResponse);
+        return new CardSearchResponse(resultPage.getContent(), resultPage.getNumber(), resultPage.getSize(), resultPage.getTotalElements());
     }
 
     public CardDetailResponse getCardById(String id) {

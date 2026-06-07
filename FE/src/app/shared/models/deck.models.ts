@@ -17,13 +17,29 @@ export interface DeckValidationModel {
   errors: DeckValidationErrorModel[];
 }
 
-export interface DeckModel {
+export interface DeckValidationResponse {
+  valid: boolean;
+  errors: DeckValidationErrorModel[];
+}
+
+export interface DeckResponse {
   id: string;
   name: string;
   ownerPlayerId: string | null;
-  source: 'SEED' | 'CUSTOM';
+  source: string;
   totalCards: number;
   valid: boolean;
   cards: DeckCardModel[];
   validation: DeckValidationModel;
+}
+
+export interface CreateDeckRequest {
+  name: string;
+  playerId: string;
+  cards: { cardId: string; quantity: number }[];
+}
+
+export interface UpdateDeckRequest {
+  name: string;
+  cards: { cardId: string; quantity: number }[];
 }

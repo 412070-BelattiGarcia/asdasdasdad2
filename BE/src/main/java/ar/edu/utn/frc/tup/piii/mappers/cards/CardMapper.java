@@ -1,13 +1,10 @@
 package ar.edu.utn.frc.tup.piii.mappers.cards;
 
-import ar.edu.utn.frc.tup.piii.dtos.cards.api_card.request.AttackRequest;
-import ar.edu.utn.frc.tup.piii.dtos.cards.api_card.request.PokemonTcgApiCardRequest;
-import ar.edu.utn.frc.tup.piii.dtos.cards.api_card.request.ResistanceRequest;
-import ar.edu.utn.frc.tup.piii.dtos.cards.api_card.request.WeaknessRequest;
+import ar.edu.utn.frc.tup.piii.dtos.cards.AttackDto;
+import ar.edu.utn.frc.tup.piii.dtos.cards.PokemonTcgApiCardDto;
+import ar.edu.utn.frc.tup.piii.dtos.cards.ResistanceDto;
+import ar.edu.utn.frc.tup.piii.dtos.cards.WeaknessDto;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse;
-import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse.AttackDto;
-import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse.WeaknessDto;
-import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse.ResistanceDto;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardSummaryResponse;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardAttackEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardEntity;
@@ -15,6 +12,8 @@ import ar.edu.utn.frc.tup.piii.repositories.entities.CardResistanceEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardWeaknessEntity;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,43 +22,87 @@ import java.util.stream.Collectors;
 @Component
 public class CardMapper {
 
-    public CardEntity toCardEntity(PokemonTcgApiCardRequest request) {
+    public CardEntity toCardEntity(PokemonTcgApiCardDto request) {
         CardEntity entity = new CardEntity();
-        entity.setId(request.getId());
-        entity.setName(request.getName());
-        entity.setSupertype(request.getSupertype());
-        entity.setSubtypes(listToCommaString(request.getSubtypes()));
-        entity.setSetCode(request.getSet() != null ? request.getSet().getId() : null);
-        entity.setNumber(null);
-        entity.setRarity(request.getRarity());
-        entity.setImageSmallUrl(request.getImages() != null ? request.getImages().getSmall() : null);
-        entity.setImageLargeUrl(request.getImages() != null ? request.getImages().getLarge() : null);
-        entity.setHp(request.getHp());
-        entity.setPokemonStage(determineStage(request.getSubtypes()));
-        entity.setEvolvesFrom(request.getEvolvesFrom());
-        entity.setPokemonTypes(listToCommaString(request.getTypes()));
-        entity.setRetreatCost(listToCommaString(request.getRetreatCost()));
-        entity.setConvertedRetreatCost(request.getConvertedRetreatCost());
-        entity.setIsEx(request.getSubtypes() != null && request.getSubtypes().stream().anyMatch(s -> s.equalsIgnoreCase("EX")));
-        entity.setIsMega(request.getSubtypes() != null && request.getSubtypes().stream().anyMatch(s -> s.equalsIgnoreCase("MEGA")));
-        entity.setRulesText(request.getRules() != null ? String.join("|", request.getRules()) : null);
+        entity.setId(request.id());
+        entity.setName(request.name());
+        entity.setSupertype(normalizeSupertype(request.supertype()));
+        entity.setSubtypes(listToCommaString(request.subtypes()));
+        entity.setSetCode(request.set() != null ? request.set().id() : null);
+        if (request.id() != null && request.id().contains("-")) {
+            entity.setNumber(request.id().substring(request.id().indexOf("-") + 1));
+        }
+        entity.setRarity(request.rarity());
+        entity.setImageSmallUrl(request.images() != null ? request.images().small() : null);
+        entity.setImageLargeUrl(request.images() != null ? request.images().large() : null);
+        entity.setHp(request.hp() != null ? Integer.parseInt(request.hp()) : null);
+        entity.setPokemonStage(determineStage(request.subtypes()));
+        entity.setEvolvesFrom(request.evolvesFrom());
+        entity.setPokemonTypes(listToCommaString(request.types()));
+        entity.setRetreatCost(listToCommaString(request.retreatCost()));
+        entity.setConvertedRetreatCost(request.convertedRetreatCost());
+        entity.setIsEx(request.subtypes() != null && request.subtypes().stream().anyMatch(s -> s.equalsIgnoreCase("EX")));
+        entity.setIsMega(request.subtypes() != null && request.subtypes().stream().anyMatch(s -> s.equalsIgnoreCase("MEGA")));
+        entity.setRulesText(request.rules() != null ? String.join("|", request.rules()) : null);
 
-        if (request.getAttacks() != null) {
+        entity.setEvolvesTo(listToCommaString(request.evolvesTo()));
+
+        if (request.abilities() != null && !request.abilities().isEmpty()) {
+            try {
+                entity.setAbilities(new ObjectMapper().writeValueAsString(request.abilities()));
+            } catch (JsonProcessingException e) {
+                entity.setAbilities(null);
+            }
+        }
+
+        if ("Energy".equalsIgnoreCase(request.supertype())) {
+            boolean isBasic = request.subtypes() != null && request.subtypes().stream().anyMatch(s -> s.equalsIgnoreCase("Basic"));
+            entity.setEnergyCardType(isBasic ? "BASIC" : "SPECIAL");
+
+            if (request.rules() != null && !request.rules().isEmpty()) {
+                entity.setProvidesEnergyTypes(String.join(",", request.rules()));
+            } else if (request.name() != null) {
+                String energyName = request.name().replace(" Energy", "").toUpperCase();
+                entity.setProvidesEnergyTypes(energyName);
+            }
+        }
+
+        if ("Trainer".equalsIgnoreCase(request.supertype())) {
+            String subtype = request.subtypes() != null && !request.subtypes().isEmpty()
+                    ? request.subtypes().get(0)
+                    : null;
+            if (subtype != null) {
+                if (subtype.equalsIgnoreCase("SUPPORTER")) {
+                    entity.setTrainerSubtype("SUPPORTER");
+                } else if (subtype.equalsIgnoreCase("STADIUM")) {
+                    entity.setTrainerSubtype("STADIUM");
+                } else if (subtype.equalsIgnoreCase("ITEM")) {
+                    entity.setTrainerSubtype("ITEM");
+                } else if (subtype.equalsIgnoreCase("TOOL")) {
+                    entity.setTrainerSubtype("TOOL");
+                } else {
+                    entity.setTrainerSubtype(subtype.toUpperCase());
+                }
+            }
+            entity.setIsAceSpec(request.subtypes() != null && request.subtypes().stream().anyMatch(s -> s.equalsIgnoreCase("ACE SPEC")));
+        }
+
+        if (request.attacks() != null) {
             List<CardAttackEntity> attacks = new ArrayList<>();
-            for (int i = 0; i < request.getAttacks().size(); i++) {
-                attacks.add(toAttackEntity(request.getAttacks().get(i), entity, i));
+            for (int i = 0; i < request.attacks().size(); i++) {
+                attacks.add(toAttackEntity(request.attacks().get(i), entity, i));
             }
             entity.setAttacks(attacks);
         }
 
-        if (request.getWeakness() != null) {
-            entity.setWeaknesses(request.getWeakness().stream()
+        if (request.weaknesses() != null) {
+            entity.setWeaknesses(request.weaknesses().stream()
                     .map(w -> toWeaknessEntity(w, entity))
                     .collect(Collectors.toList()));
         }
 
-        if (request.getResistance() != null) {
-            entity.setResistances(request.getResistance().stream()
+        if (request.resistances() != null) {
+            entity.setResistances(request.resistances().stream()
                     .map(r -> toResistanceEntity(r, entity))
                     .collect(Collectors.toList()));
         }
@@ -121,36 +164,37 @@ public class CardMapper {
         );
     }
 
-    private CardAttackEntity toAttackEntity(AttackRequest request, CardEntity card, int index) {
+    private CardAttackEntity toAttackEntity(AttackDto dto, CardEntity card, int index) {
         CardAttackEntity entity = new CardAttackEntity();
         entity.setCard(card);
         entity.setAttackIndex(index);
-        entity.setName(request.getName());
-        entity.setPrintedCost(listToCommaString(request.getCost()));
-        entity.setConvertedEnergyCost(request.getConvertedEnergyCost() != null ? request.getConvertedEnergyCost() : 0);
-        entity.setDamageText(request.getDamage());
-        entity.setEffectText(request.getText());
+        entity.setName(dto.name());
+        entity.setPrintedCost(listToCommaString(dto.cost()));
+        entity.setConvertedEnergyCost(dto.convertedEnergyCost() != null ? dto.convertedEnergyCost() : 0);
+        entity.setDamageText(dto.damage());
+        entity.setEffectText(dto.text());
+        entity.setBaseDamage(dto.baseDamage());
         return entity;
     }
 
-    private CardWeaknessEntity toWeaknessEntity(WeaknessRequest request, CardEntity card) {
+    private CardWeaknessEntity toWeaknessEntity(WeaknessDto dto, CardEntity card) {
         CardWeaknessEntity entity = new CardWeaknessEntity();
         entity.setCard(card);
-        entity.setEnergyType(request.getType());
+        entity.setEnergyType(dto.type());
         try {
-            entity.setMultiplier(request.getValue() != null ? Integer.parseInt(request.getValue()) : 2);
+            entity.setMultiplier(dto.value() != null ? Integer.parseInt(dto.value()) : 2);
         } catch (NumberFormatException e) {
             entity.setMultiplier(2);
         }
         return entity;
     }
 
-    private CardResistanceEntity toResistanceEntity(ResistanceRequest request, CardEntity card) {
+    private CardResistanceEntity toResistanceEntity(ResistanceDto dto, CardEntity card) {
         CardResistanceEntity entity = new CardResistanceEntity();
         entity.setCard(card);
-        entity.setEnergyType(request.getType());
+        entity.setEnergyType(dto.type());
         try {
-            entity.setValue(request.getValue() != null ? Integer.parseInt(request.getValue()) : -20);
+            entity.setValue(dto.value() != null ? Integer.parseInt(dto.value()) : -20);
         } catch (NumberFormatException e) {
             entity.setValue(-20);
         }
@@ -162,8 +206,10 @@ public class CardMapper {
                 entity.getAttackIndex() != null ? entity.getAttackIndex() : 0,
                 entity.getName(),
                 commaStringToList(entity.getPrintedCost()),
+                entity.getConvertedEnergyCost(),
                 entity.getDamageText(),
-                entity.getEffectText()
+                entity.getEffectText(),
+                entity.getBaseDamage()
         );
     }
 
@@ -192,6 +238,11 @@ public class CardMapper {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toList());
+    }
+
+    private String normalizeSupertype(String supertype) {
+        if (supertype == null) return null;
+        return supertype.replace('é', 'e').replace('É', 'E').toUpperCase();
     }
 
     private String determineStage(List<String> subtypes) {

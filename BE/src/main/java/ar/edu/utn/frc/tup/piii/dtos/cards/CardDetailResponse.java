@@ -23,7 +23,4 @@ public record CardDetailResponse(
         Boolean isEx,
         Boolean isMega
 ) {
-    public record AttackDto(int index, String name, List<String> cost, String damage, String text) {}
-    public record WeaknessDto(String type, String value) {}
-    public record ResistanceDto(String type, String value) {}
 }

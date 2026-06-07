@@ -1,8 +1,8 @@
 package ar.edu.utn.frc.tup.piii.engine.model;
 
+import ar.edu.utn.frc.tup.piii.engine.MatchStatus;
 import ar.edu.utn.frc.tup.piii.engine.turn.TurnPhase;
 import ar.edu.utn.frc.tup.piii.engine.victory.FinishReason;
-import ar.edu.utn.frc.tup.piii.matches.domain.MatchStatus;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +18,7 @@ public class GameState {
     private UUID stadiumCardInstanceId;
     private TurnFlags turnFlags;
     private Object pendingDecision;
+    private UUID pendingPrizeOwnerPlayerId;
     private UUID winnerPlayerId;
     private FinishReason finishReason;
     private Instant createdAt;
@@ -52,6 +53,9 @@ public class GameState {
 
     public Object getPendingDecision() { return pendingDecision; }
     public void setPendingDecision(Object pendingDecision) { this.pendingDecision = pendingDecision; }
+
+    public UUID getPendingPrizeOwnerPlayerId() { return pendingPrizeOwnerPlayerId; }
+    public void setPendingPrizeOwnerPlayerId(UUID pendingPrizeOwnerPlayerId) { this.pendingPrizeOwnerPlayerId = pendingPrizeOwnerPlayerId; }
 
     public UUID getWinnerPlayerId() { return winnerPlayerId; }
     public void setWinnerPlayerId(UUID winnerPlayerId) { this.winnerPlayerId = winnerPlayerId; }

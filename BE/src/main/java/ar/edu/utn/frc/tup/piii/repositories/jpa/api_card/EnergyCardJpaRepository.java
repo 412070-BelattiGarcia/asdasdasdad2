@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 import ar.edu.utn.frc.tup.piii.repositories.entities.api_card.EnergyCardEntity;
 
 @Repository
+@Deprecated
 public interface EnergyCardJpaRepository extends JpaRepository<EnergyCardEntity, String> {
 }

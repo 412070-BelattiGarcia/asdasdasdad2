@@ -27,11 +27,8 @@ public class UserEntity {
     @Column(name = "email", unique = true, length = 120)
     private String email;
 
-    @Column(name = "password_hash")
-    private String passwordHash;
-
-    @Column(name = "display_name", length = 80)
-    private String displayName;
+    @Column(name = "password")
+    private String password;
 
     @Column(name = "role", nullable = false, length = 30)
     private String role = "PLAYER";
@@ -41,6 +38,9 @@ public class UserEntity {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private PlayerEntity player;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

@@ -1,5 +1,6 @@
 package ar.edu.utn.frc.tup.piii.repositories.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,8 +24,10 @@ public class DeckEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "owner_user_id")
-    private UUID ownerUserId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_player_id")
+    @JsonIgnore
+    private PlayerEntity ownerPlayer;
 
     @Column(name = "name", nullable = false, length = 120)
     private String name;

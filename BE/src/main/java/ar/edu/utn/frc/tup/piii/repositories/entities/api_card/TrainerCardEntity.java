@@ -14,6 +14,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @Entity
 @Table(name = "trainer_cards")
+@Deprecated
 public class TrainerCardEntity {
 
     @Id

@@ -154,7 +154,7 @@ ALTER TABLE public.deck_cards OWNER TO postgres;
 
 CREATE TABLE public.decks (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    owner_user_id uuid,
+    owner_player_id uuid,
     name character varying(120) NOT NULL,
     source character varying(30) DEFAULT 'USER'::character varying NOT NULL,
     valid boolean DEFAULT false NOT NULL,
@@ -168,17 +168,18 @@ ALTER TABLE public.decks OWNER TO postgres;
 
 --
 -- TOC entry 221 (class 1259 OID 17743)
--- Name: guest_players; Type: TABLE; Schema: public; Owner: postgres
+-- Name: players; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.guest_players (
+CREATE TABLE public.players (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid,
     display_name character varying(80) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.guest_players OWNER TO postgres;
+ALTER TABLE public.players OWNER TO postgres;
 
 --
 -- TOC entry 231 (class 1259 OID 17968)
@@ -270,7 +271,6 @@ CREATE TABLE public.users (
     username character varying(50) NOT NULL,
     email character varying(120),
     password_hash text,
-    display_name character varying(80),
     role character varying(30) DEFAULT 'PLAYER'::character varying NOT NULL,
     status character varying(30) DEFAULT 'ACTIVE'::character varying NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -336,17 +336,17 @@ COPY public.deck_cards (id, deck_id, card_id, quantity, created_at) FROM stdin;
 -- Data for Name: decks; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.decks (id, owner_user_id, name, source, valid, validation_errors, created_at, updated_at) FROM stdin;
+COPY public.decks (id, owner_player_id, name, source, valid, validation_errors, created_at, updated_at) FROM stdin;
 \.
 
 
 --
 -- TOC entry 5195 (class 0 OID 17743)
 -- Dependencies: 221
--- Data for Name: guest_players; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: players; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.guest_players (id, display_name, created_at) FROM stdin;
+COPY public.players (id, user_id, display_name, created_at) FROM stdin;
 \.
 
 
@@ -396,7 +396,7 @@ COPY public.matches (id, status, current_phase, turn_number, current_player_id, 
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, username, email, password_hash, display_name, role, status, created_at, updated_at) FROM stdin;
+COPY public.users (id, username, email, password_hash, role, status, created_at, updated_at) FROM stdin;
 \.
 
 
@@ -474,11 +474,11 @@ ALTER TABLE ONLY public.decks
 
 --
 -- TOC entry 4989 (class 2606 OID 17752)
--- Name: guest_players guest_players_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: players players_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.guest_players
-    ADD CONSTRAINT guest_players_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_pkey PRIMARY KEY (id);
 
 
 --
@@ -613,10 +613,10 @@ CREATE INDEX idx_cards_trainer_subtype ON public.cards USING btree (trainer_subt
 
 --
 -- TOC entry 5007 (class 1259 OID 17872)
--- Name: idx_decks_owner_user_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_decks_owner_player_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_decks_owner_user_id ON public.decks USING btree (owner_user_id);
+CREATE INDEX idx_decks_owner_player_id ON public.decks USING btree (owner_player_id);
 
 
 --
@@ -754,11 +754,11 @@ ALTER TABLE ONLY public.deck_cards
 
 --
 -- TOC entry 5040 (class 2606 OID 17867)
--- Name: decks decks_owner_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: decks decks_owner_player_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.decks
-    ADD CONSTRAINT decks_owner_user_id_fkey FOREIGN KEY (owner_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+    ADD CONSTRAINT decks_owner_player_id_fkey FOREIGN KEY (owner_player_id) REFERENCES public.players(id) ON DELETE SET NULL;
 
 
 --
@@ -795,6 +795,15 @@ ALTER TABLE ONLY public.match_players
 
 ALTER TABLE ONLY public.match_states
     ADD CONSTRAINT match_states_match_id_fkey FOREIGN KEY (match_id) REFERENCES public.matches(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5041 (class 2606 OID 17868)
+-- Name: players players_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.players
+    ADD CONSTRAINT players_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 -- Completed on 2026-05-06 13:42:55

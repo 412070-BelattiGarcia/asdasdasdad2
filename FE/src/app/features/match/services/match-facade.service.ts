@@ -1,10 +1,13 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { MatchApiService, MatchResponse, MatchStateResponse } from '../../../core/api/match-api.service';
+import { MatchApiService, MatchResponse } from '../../../core/api/match-api.service';
+import { MatchStateResponse } from '../../../shared/models/game-state.models';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchFacadeService {
   private readonly matchApi = inject(MatchApiService);
+  private readonly authService = inject(AuthService);
 
   private readonly _matchId = signal<string | null>(null);
   readonly matchId = this._matchId.asReadonly();
@@ -18,23 +21,27 @@ export class MatchFacadeService {
   private readonly _status = signal<string | null>(null);
   readonly status = this._status.asReadonly();
 
-  createMatch(playerName: string, deckId: string): Observable<MatchResponse> {
-    return this.matchApi.createMatch({ playerName, deckId }).pipe(
+  createMatch(player1Name: string, player1DeckId: string): Observable<MatchResponse> {
+    const player1Id = this.authService.playerId();
+    return this.matchApi.createMatch({ player1Id: player1Id ?? '', player1Name, player1DeckId }).pipe(
       tap((res) => {
-        this._matchId.set(res.matchId);
-        this._playerId.set(res.playerId);
-        this._side.set(res.side);
+        const player = res.players[0];
+        this._matchId.set(res.id);
+        this._playerId.set(player?.playerId ?? null);
+        this._side.set(player?.side ?? null);
         this._status.set(res.status);
       }),
     );
   }
 
   joinMatch(matchId: string, playerName: string, deckId: string): Observable<MatchResponse> {
-    return this.matchApi.joinMatch(matchId, { playerName, deckId }).pipe(
+    const playerId = this.authService.playerId();
+    return this.matchApi.joinMatch(matchId, { playerId: playerId ?? '', playerName, deckId }).pipe(
       tap((res) => {
-        this._matchId.set(res.matchId);
-        this._playerId.set(res.playerId);
-        this._side.set(res.side);
+        const player = res.players.find(p => p.playerId === this._playerId()) ?? res.players[0];
+        this._matchId.set(res.id);
+        this._playerId.set(player?.playerId ?? null);
+        this._side.set(player?.side ?? null);
         this._status.set(res.status);
       }),
     );

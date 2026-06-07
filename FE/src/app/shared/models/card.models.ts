@@ -1,5 +1,7 @@
 export type CardSupertype = 'POKEMON' | 'ENERGY' | 'TRAINER';
 
+export type TrainerSubtype = 'ITEM' | 'SUPPORTER' | 'STADIUM' | 'ACE_SPEC';
+
 export type PokemonStage = 'BASIC' | 'STAGE_1' | 'STAGE_2' | 'MEGA' | 'RESTORED';
 
 export type EnergyType = 'GRASS' | 'FIRE' | 'WATER' | 'LIGHTNING' | 'PSYCHIC' | 'FIGHTING' | 'DARKNESS' | 'METAL' | 'FAIRY' | 'COLORLESS';
@@ -8,6 +10,7 @@ export interface AttackModel {
   index: number;
   name: string;
   cost: EnergyType[];
+  convertedEnergyCost: number;
   damage: string;
   text: string;
 }
@@ -41,4 +44,43 @@ export interface CardModel {
   resistances?: ResistanceModel[];
   retreatCost?: EnergyType[];
   isEx?: boolean;
+  isMega?: boolean;
+}
+
+export interface CardSummaryResponse {
+  id: string;
+  name: string;
+  supertype: string;
+  setCode: string;
+  number: string;
+  imageSmallUrl: string;
+}
+
+export interface CardDetailResponse {
+  id: string;
+  name: string;
+  supertype: string;
+  subtypes: string[];
+  setCode: string;
+  number: string;
+  imageSmallUrl: string | null;
+  imageLargeUrl: string | null;
+  rulesText: string[];
+  hp?: number;
+  stage?: string;
+  evolvesFrom?: string;
+  types?: string[];
+  attacks?: AttackModel[];
+  weaknesses?: WeaknessModel[];
+  resistances?: ResistanceModel[];
+  retreatCost?: string[];
+  isEx?: boolean;
+  isMega?: boolean;
+}
+
+export interface PaginatedCardsResponse {
+  items: CardSummaryResponse[];
+  page: number;
+  size: number;
+  totalItems: number;
 }

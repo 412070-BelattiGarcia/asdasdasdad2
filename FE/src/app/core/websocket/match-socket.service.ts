@@ -2,14 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { Client, IFrame, IMessage, StompSubscription } from '@stomp/stompjs';
 import { Observable, Subject } from 'rxjs';
 import SockJS from 'sockjs-client';
-import { GameEventModel } from '../../shared/models/game-action.models';
+import { GameEventDto } from '../../shared/models/game-action.models';
+import { PrivatePlayerStateModel } from '../../shared/models/game-state.models';
 
 export type ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'RECONNECTING';
-
-export interface PrivateStateMessage {
-  playerId: string;
-  state: unknown;
-}
 
 @Injectable({ providedIn: 'root' })
 export class MatchSocketService {
@@ -19,10 +15,10 @@ export class MatchSocketService {
   private publicSub: StompSubscription | null = null;
   private privateSub: StompSubscription | null = null;
 
-  private readonly _publicEvents = new Subject<GameEventModel>();
+  private readonly _publicEvents = new Subject<GameEventDto>();
   readonly publicEvents$ = this._publicEvents.asObservable();
 
-  private readonly _privateState = new Subject<PrivateStateMessage>();
+  private readonly _privateState = new Subject<PrivatePlayerStateModel>();
   readonly privateState$ = this._privateState.asObservable();
 
   private readonly _connectionStatus = new Subject<ConnectionStatus>();
@@ -93,10 +89,10 @@ export class MatchSocketService {
       `/topic/matches/${matchId}/events`,
       (message: IMessage) => {
         try {
-          const event: GameEventModel = JSON.parse(message.body);
+          const event: GameEventDto = JSON.parse(message.body);
           this._publicEvents.next(event);
         } catch {
-          this._publicEvents.next(message.body as unknown as GameEventModel);
+          this._publicEvents.next(message.body as unknown as GameEventDto);
         }
       },
     );
@@ -105,7 +101,7 @@ export class MatchSocketService {
       `/queue/matches/${matchId}/${playerId}`,
       (message: IMessage) => {
         try {
-          const state: PrivateStateMessage = JSON.parse(message.body);
+          const state: PrivatePlayerStateModel = JSON.parse(message.body);
           this._privateState.next(state);
         } catch {
           // ignore parse errors

@@ -158,7 +158,7 @@ src/main/java/ar/edu/utn/frc/tup/piii/
       CardWeaknessEntity.java
       DeckCardEntity.java
       DeckEntity.java
-      GuestPlayerEntity.java
+      PlayerEntity.java
       MatchPlayerEntity.java
       UserEntity.java
     jpa/
@@ -168,7 +168,7 @@ src/main/java/ar/edu/utn/frc/tup/piii/
       CardWeaknessJpaRepository.java
       DeckCardJpaRepository.java
       DeckJpaRepository.java
-      GuestPlayerJpaRepository.java
+      PlayerJpaRepository.java
       MatchPlayerJpaRepository.java
       UserJpaRepository.java
   services/

@@ -20,48 +20,58 @@ export class GameActionDispatcherService {
       payload,
       clientRequestId: clientRequestId ?? crypto.randomUUID(),
     };
-    return this.matchApi.sendAction(matchId, request) as Observable<GameActionResponse>;
-  }
-
-  drawCard(matchId: string, playerId: string): Observable<GameActionResponse> {
-    return this.dispatchAction(matchId, playerId, 'DRAW_CARD', {});
+    return this.matchApi.sendAction(matchId, request);
   }
 
   endTurn(matchId: string, playerId: string): Observable<GameActionResponse> {
     return this.dispatchAction(matchId, playerId, 'END_TURN', {});
   }
 
+  putBasicOnBench(matchId: string, playerId: string, handIndex: number): Observable<GameActionResponse> {
+    return this.dispatchAction(matchId, playerId, 'PUT_BASIC_ON_BENCH', { handIndex });
+  }
+
   attachEnergy(
     matchId: string,
     playerId: string,
-    energyCardInstanceId: string,
+    handIndex: number,
     targetPokemonInstanceId: string,
   ): Observable<GameActionResponse> {
     return this.dispatchAction(matchId, playerId, 'ATTACH_ENERGY', {
-      energyCardInstanceId,
+      handIndex,
       targetPokemonInstanceId,
     });
+  }
+
+  evolvePokemon(
+    matchId: string,
+    playerId: string,
+    handIndex: number,
+    targetPokemonInstanceId: string,
+  ): Observable<GameActionResponse> {
+    return this.dispatchAction(matchId, playerId, 'EVOLVE_POKEMON', {
+      handIndex,
+      targetPokemonInstanceId,
+    });
+  }
+
+  playTrainer(matchId: string, playerId: string, handIndex: number): Observable<GameActionResponse> {
+    return this.dispatchAction(matchId, playerId, 'PLAY_TRAINER', { handIndex });
+  }
+
+  retreatActive(matchId: string, playerId: string, benchIndex: number): Observable<GameActionResponse> {
+    return this.dispatchAction(matchId, playerId, 'RETREAT_ACTIVE', { benchIndex });
   }
 
   declareAttack(
     matchId: string,
     playerId: string,
-    attackerPokemonInstanceId: string,
     attackIndex: number,
+    targetPokemonInstanceId: string,
   ): Observable<GameActionResponse> {
     return this.dispatchAction(matchId, playerId, 'DECLARE_ATTACK', {
-      attackerPokemonInstanceId,
       attackIndex,
-    });
-  }
-
-  retreatActive(
-    matchId: string,
-    playerId: string,
-    newActiveInstanceId: string,
-  ): Observable<GameActionResponse> {
-    return this.dispatchAction(matchId, playerId, 'RETREAT_ACTIVE', {
-      newActiveInstanceId,
+      targetPokemonInstanceId,
     });
   }
 }

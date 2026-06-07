@@ -32,11 +32,21 @@ public class CardLookupAdapter implements CardLookupPort {
             return null;
         }
         CardEntity entity = optional.get();
-        return switch (entity.getSupertype()) {
-            case "Pokémon", "Pokemon" -> toPokemon(entity);
-            case "Trainer" -> toTrainer(entity);
-            case "Energy" -> toEnergy(entity);
-            default -> toPokemon(entity);
+        CardSupertype supertype = resolveSupertype(entity.getSupertype());
+        return switch (supertype) {
+            case POKEMON -> toPokemon(entity);
+            case TRAINER -> toTrainer(entity);
+            case ENERGY -> toEnergy(entity);
+        };
+    }
+
+    private CardSupertype resolveSupertype(String value) {
+        if (value == null) return CardSupertype.POKEMON;
+        return switch (value) {
+            case "Pokémon", "Pokemon", "POKEMON" -> CardSupertype.POKEMON;
+            case "Trainer", "TRAINER" -> CardSupertype.TRAINER;
+            case "Energy", "ENERGY" -> CardSupertype.ENERGY;
+            default -> CardSupertype.POKEMON;
         };
     }
 
@@ -46,8 +56,8 @@ public class CardLookupAdapter implements CardLookupPort {
         d.setHp(e.getHp() != null ? e.getHp() : 0);
         d.setStage(e.getPokemonStage());
         d.setEvolvesFrom(e.getEvolvesFrom());
-        d.setTypes(splitList(e.getPokemonTypes()));
-        d.setRetreatCost(splitList(e.getRetreatCost()));
+        d.setTypes(splitEnumList(e.getPokemonTypes(), EnergyType.class));
+        d.setRetreatCost(splitEnumList(e.getRetreatCost(), EnergyType.class));
         d.setEx(e.getIsEx() != null && e.getIsEx());
         d.setMega(e.getIsMega() != null && e.getIsMega());
         if (e.getAttacks() != null) {
@@ -71,7 +81,7 @@ public class CardLookupAdapter implements CardLookupPort {
     private TrainerCardDefinition toTrainer(CardEntity e) {
         TrainerCardDefinition d = new TrainerCardDefinition();
         mapBase(e, d);
-        d.setTrainerSubtype(e.getTrainerSubtype());
+        d.setTrainerSubtype(resolveTrainerSubtype(e.getTrainerSubtype()));
         d.setAceSpec(e.getIsAceSpec() != null && e.getIsAceSpec());
         return d;
     }
@@ -79,8 +89,8 @@ public class CardLookupAdapter implements CardLookupPort {
     private EnergyCardDefinition toEnergy(CardEntity e) {
         EnergyCardDefinition d = new EnergyCardDefinition();
         mapBase(e, d);
-        d.setEnergyCardType(e.getEnergyCardType());
-        d.setProvides(splitList(e.getProvidesEnergyTypes()));
+        d.setEnergyCardType(resolveEnergyCardType(e.getEnergyCardType()));
+        d.setProvides(splitEnumList(e.getProvidesEnergyTypes(), EnergyType.class));
         return d;
     }
 
@@ -104,7 +114,7 @@ public class CardLookupAdapter implements CardLookupPort {
             ad.setIndex(0);
         }
         ad.setName(a.getName());
-        ad.setCost(splitList(a.getPrintedCost()));
+        ad.setCost(splitEnumList(a.getPrintedCost(), EnergyType.class));
         ad.setDamage(a.getDamageText());
         ad.setText(a.getEffectText());
         return ad;
@@ -112,16 +122,45 @@ public class CardLookupAdapter implements CardLookupPort {
 
     private PokemonCardDefinition.WeaknessDefinition toWeakness(CardWeaknessEntity w) {
         PokemonCardDefinition.WeaknessDefinition wd = new PokemonCardDefinition.WeaknessDefinition();
-        wd.setType(w.getEnergyType());
+        wd.setType(parseEnergyType(w.getEnergyType()));
         wd.setValue(w.getMultiplier() != null ? String.valueOf(w.getMultiplier()) : null);
         return wd;
     }
 
     private PokemonCardDefinition.ResistanceDefinition toResistance(CardResistanceEntity r) {
         PokemonCardDefinition.ResistanceDefinition rd = new PokemonCardDefinition.ResistanceDefinition();
-        rd.setType(r.getEnergyType());
+        rd.setType(parseEnergyType(r.getEnergyType()));
         rd.setValue(r.getValue() != null ? String.valueOf(r.getValue()) : null);
         return rd;
+    }
+
+    private EnergyType parseEnergyType(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return EnergyType.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private TrainerSubtype resolveTrainerSubtype(String value) {
+        if (value == null) return null;
+        return switch (value) {
+            case "ITEM" -> TrainerSubtype.ITEM;
+            case "SUPPORTER" -> TrainerSubtype.SUPPORTER;
+            case "STADIUM" -> TrainerSubtype.STADIUM;
+            case "ACE_SPEC" -> TrainerSubtype.ACE_SPEC;
+            default -> null;
+        };
+    }
+
+    private EnergyCardType resolveEnergyCardType(String value) {
+        if (value == null) return null;
+        return switch (value) {
+            case "BASIC" -> EnergyCardType.BASIC;
+            case "SPECIAL" -> EnergyCardType.SPECIAL;
+            default -> null;
+        };
     }
 
     private List<String> splitList(String value) {
@@ -131,6 +170,24 @@ public class CardLookupAdapter implements CardLookupPort {
         return Arrays.stream(value.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private <T extends Enum<T>> List<T> splitEnumList(String value, Class<T> enumClass) {
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(s -> {
+                    try {
+                        return Enum.valueOf(enumClass, s.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        return null;
+                    }
+                })
+                .filter(e -> e != null)
                 .collect(Collectors.toList());
     }
 }

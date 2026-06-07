@@ -89,7 +89,7 @@ The proposal must create or verify these entities:
 
 Users
 UserEntity
-GuestPlayerEntity
+PlayerEntity
 Cards
 CardEntity
 CardAttackEntity
@@ -108,7 +108,7 @@ Required repositories
 The proposal must create these Spring Data repositories:
 
 UserJpaRepository
-GuestPlayerJpaRepository
+PlayerJpaRepository
 CardJpaRepository
 CardAttackJpaRepository
 CardWeaknessJpaRepository

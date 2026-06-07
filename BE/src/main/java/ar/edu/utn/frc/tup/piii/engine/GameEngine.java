@@ -4,22 +4,17 @@ import ar.edu.utn.frc.tup.piii.engine.action.ActionResult;
 import ar.edu.utn.frc.tup.piii.engine.action.GameAction;
 import ar.edu.utn.frc.tup.piii.engine.action.GameActionType;
 import ar.edu.utn.frc.tup.piii.engine.action.GameError;
-import ar.edu.utn.frc.tup.piii.engine.handlers.ActionHandler;
+import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
+import ar.edu.utn.frc.tup.piii.engine.handlers.*;
 import ar.edu.utn.frc.tup.piii.engine.model.GameState;
 import ar.edu.utn.frc.tup.piii.engine.ports.CardLookupPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.EventPublisherPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.RandomizerPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.StatePersisterPort;
 import ar.edu.utn.frc.tup.piii.engine.rules.RuleValidator;
-import ar.edu.utn.frc.tup.piii.engine.victory.VictoryConditionChecker;
-import ar.edu.utn.frc.tup.piii.engine.victory.VictoryResult;
-import ar.edu.utn.frc.tup.piii.matches.domain.MatchStatus;
+import ar.edu.utn.frc.tup.piii.engine.turn.TurnManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class GameEngine {
     private final CardLookupPort cardLookup;
@@ -27,93 +22,87 @@ public class GameEngine {
     private final StatePersisterPort persister;
     private final EventPublisherPort eventPublisher;
     private final RuleValidator ruleValidator;
-    private final VictoryConditionChecker victoryChecker;
-    private final Map<GameActionType, ActionHandler> handlers;
+    private final Map<GameActionType, GameHandler> handlers;
 
     public GameEngine(CardLookupPort cardLookup, RandomizerPort randomizer,
                       StatePersisterPort persister, EventPublisherPort eventPublisher,
-                      RuleValidator ruleValidator, VictoryConditionChecker victoryChecker,
-                      Map<GameActionType, ActionHandler> handlers) {
+                      TurnManager turnManager, RuleValidator ruleValidator) {
         this.cardLookup = cardLookup;
         this.randomizer = randomizer;
         this.persister = persister;
         this.eventPublisher = eventPublisher;
         this.ruleValidator = ruleValidator;
-        this.victoryChecker = victoryChecker;
-        this.handlers = handlers;
+        this.handlers = buildDefaultHandlers(turnManager);
+    }
+
+    private Map<GameActionType, GameHandler> buildDefaultHandlers(TurnManager turnManager) {
+        return Map.ofEntries(
+                Map.entry(GameActionType.DRAW_CARD, new DrawCardHandler()),
+                Map.entry(GameActionType.PUT_BASIC_ON_BENCH, new PutBasicOnBenchHandler()),
+                Map.entry(GameActionType.ATTACH_ENERGY, new AttachEnergyHandler()),
+                Map.entry(GameActionType.EVOLVE_POKEMON, new EvolvePokemonHandler()),
+                Map.entry(GameActionType.PLAY_TRAINER, new PlayTrainerHandler()),
+                Map.entry(GameActionType.RETREAT_ACTIVE, new RetreatActiveHandler()),
+                Map.entry(GameActionType.DECLARE_ATTACK, new DeclareAttackHandler()),
+                Map.entry(GameActionType.END_TURN, new EndTurnHandler(turnManager)),
+                Map.entry(GameActionType.CHOOSE_KNOCKOUT_REPLACEMENT, new ChooseNewActiveAfterKnockoutHandler()),
+                Map.entry(GameActionType.TAKE_PRIZE_CARD, new TakePrizeCardHandler())
+        );
     }
 
     public ActionResult applyAction(UUID matchId, UUID playerId, GameAction action) {
-        // 1. Load state
-        Optional<GameState> stateOpt = persister.loadState(matchId);
-        if (stateOpt.isEmpty()) {
-            return createErrorResult(action.getClientRequestId(), "MATCH_NOT_FOUND", "Partida no encontrada.");
+        try {
+            GameState state = persister.loadState(matchId);
+            if (state == null) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                        new GameError("MATCH_NOT_FOUND", "Match not found: " + matchId));
+            }
+
+            if (state.getStatus() != MatchStatus.ACTIVE) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                        new GameError("MATCH_NOT_ACTIVE", "The match is not active."));
+            }
+
+            if (!state.getCurrentPlayerId().equals(playerId)) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                        new GameError("NOT_YOUR_TURN", "It is not your turn."));
+            }
+
+            EngineContext ctx = new EngineContext(state, cardLookup, randomizer, persister, eventPublisher);
+
+            if (!ruleValidator.validate(ctx, action)) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                        new GameError("ACTION_REJECTED", "Action rejected by game rules: " + action.getType()));
+            }
+
+            GameHandler handler = handlers.get(action.getType());
+            if (handler == null) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                        new GameError("UNKNOWN_ACTION", "Unknown action type: " + action.getType()));
+            }
+
+            handler.handle(ctx, action);
+
+            if (ctx.getError() != null) {
+                return new ActionResult(false, action.getClientRequestId(), null, null, List.of(), ctx.getError());
+            }
+
+            persister.saveState(matchId, ctx.getState());
+
+            List<GameEvent> pendingEvents = ctx.getPendingEvents();
+            if (!pendingEvents.isEmpty()) {
+                eventPublisher.publishEvents(matchId, pendingEvents);
+            }
+
+            return new ActionResult(true, action.getClientRequestId(), null, null, pendingEvents, null);
+
+        } catch (Exception e) {
+            return new ActionResult(false, action.getClientRequestId(), null, null, List.of(),
+                    new GameError("INTERNAL_ERROR", e.getMessage()));
         }
-        GameState state = stateOpt.get();
-
-        // 2. Verify match is ACTIVE
-        if (state.getStatus() != MatchStatus.ACTIVE) {
-            return createErrorResult(action.getClientRequestId(), ErrorCode.MATCH_NOT_ACTIVE.name(),
-                    "La partida no está activa.");
-        }
-
-        // 3. Verify it's the player's turn
-        if (!state.getCurrentPlayerId().equals(playerId)) {
-            return createErrorResult(action.getClientRequestId(), ErrorCode.NOT_YOUR_TURN.name(),
-                    "No es tu turno.");
-        }
-
-        // 4. Create EngineContext
-        EngineContext ctx = new EngineContext(state, cardLookup, randomizer);
-
-        // 5. Validate
-        if (!ruleValidator.validate(ctx, action)) {
-            return createErrorResult(action.getClientRequestId(), "VALIDATION_ERROR",
-                    "La acción no es válida.");
-        }
-
-        // 6. Dispatch handler
-        ActionHandler handler = handlers.get(action.getType());
-        if (handler == null) {
-            return createErrorResult(action.getClientRequestId(), "UNSUPPORTED_ACTION",
-                    "Tipo de acción no soportado.");
-        }
-        handler.handle(action, ctx);
-
-        // 7. Check victory
-        Optional<VictoryResult> victory = victoryChecker.check(ctx);
-        if (victory.isPresent()) {
-            // 8. Set winner
-            state.setWinnerPlayerId(victory.get().getWinnerPlayerId());
-            state.setFinishReason(victory.get().getFinishReason());
-            state.setStatus(MatchStatus.FINISHED);
-        }
-
-        // 9. Persist state
-        persister.saveState(matchId, state);
-
-        // 10. Publish events
-        List<String> allEvents = new ArrayList<>(ctx.getEvents());
-        eventPublisher.publishEvents(matchId, allEvents);
-
-        // 11. Return success
-        ActionResult result = new ActionResult();
-        result.setSuccess(true);
-        result.setClientRequestId(action.getClientRequestId());
-        result.setEvents(allEvents);
-        return result;
     }
 
-    public Optional<GameState> loadState(UUID matchId) {
+    public GameState loadState(UUID matchId) {
         return persister.loadState(matchId);
-    }
-
-    private ActionResult createErrorResult(String clientRequestId, String code, String message) {
-        ActionResult result = new ActionResult();
-        result.setSuccess(false);
-        result.setClientRequestId(clientRequestId);
-        result.setError(new GameError(code, message));
-        result.setEvents(List.of());
-        return result;
     }
 }

@@ -2,7 +2,9 @@ package ar.edu.utn.frc.tup.piii.controllers.cards;
 
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardDetailResponse;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardSearchRequest;
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardSearchResponse;
 import ar.edu.utn.frc.tup.piii.dtos.cards.CardSummaryResponse;
+import ar.edu.utn.frc.tup.piii.dtos.cards.CardSyncResponse;
 import ar.edu.utn.frc.tup.piii.services.cards.CardCacheSyncService;
 import ar.edu.utn.frc.tup.piii.services.cards.CardCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,8 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,10 +31,10 @@ public class CardController {
     @Operation(summary = "Search cards with filters", description = "Search the local card catalog with optional filters and pagination")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successful search",
-                    content = @Content(schema = @Schema(implementation = Page.class))),
+                    content = @Content(schema = @Schema(implementation = CardSearchResponse.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Page<CardSummaryResponse>> searchCards(
+    public ResponseEntity<CardSearchResponse> searchCards(
             @Parameter(description = "Search query (name LIKE)")
             @RequestParam(required = false) String query,
             @Parameter(description = "Card supertype filter (POKEMON, TRAINER, ENERGY)")
@@ -47,7 +47,7 @@ public class CardController {
             @RequestParam(required = false, defaultValue = "20") Integer size) {
 
         CardSearchRequest request = new CardSearchRequest(query, supertype, setCode, page, size);
-        Page<CardSummaryResponse> result = cardCatalogService.searchCards(request);
+        CardSearchResponse result = cardCatalogService.searchCards(request);
         return ResponseEntity.ok(result);
     }
 
@@ -69,11 +69,12 @@ public class CardController {
     @PostMapping("/sync")
     @Operation(summary = "Manual card sync", description = "Triggers a manual synchronization of all cards from the Pokemon TCG API")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Sync completed successfully"),
+            @ApiResponse(responseCode = "200", description = "Sync completed successfully",
+                    content = @Content(schema = @Schema(implementation = CardSyncResponse.class))),
             @ApiResponse(responseCode = "500", description = "Sync failed")
     })
-    public ResponseEntity<String> syncCards() {
-        cardCacheSyncService.syncAll();
-        return ResponseEntity.ok("Card synchronization completed successfully");
+    public ResponseEntity<CardSyncResponse> syncCards() {
+        CardSyncResponse response = cardCacheSyncService.syncAll();
+        return ResponseEntity.ok(response);
     }
 }

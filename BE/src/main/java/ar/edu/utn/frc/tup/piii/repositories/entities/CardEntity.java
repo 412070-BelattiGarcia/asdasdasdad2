@@ -55,6 +55,12 @@ public class CardEntity {
     @Column(name = "evolves_from", length = 160)
     private String evolvesFrom;
 
+    @Column(name = "evolves_to", columnDefinition = "TEXT")
+    private String evolvesTo;
+
+    @Column(name = "abilities", columnDefinition = "TEXT")
+    private String abilities;
+
     @Column(name = "pokemon_types", columnDefinition = "TEXT")
     private String pokemonTypes;
 

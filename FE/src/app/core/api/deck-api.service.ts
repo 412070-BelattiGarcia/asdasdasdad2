@@ -1,34 +1,37 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from './api-client.service';
-import { DeckModel, DeckValidationModel } from '../../shared/models/deck.models';
-
-export interface CreateDeckRequest {
-  name: string;
-  cards: { cardId: string; quantity: number }[];
-}
-
-export interface SeedDeckResponse {
-  items: { id: string; name: string; valid: boolean; totalCards: number }[];
-}
+import { CreateDeckRequest, DeckResponse, DeckValidationResponse, UpdateDeckRequest } from '../../shared/models/deck.models';
 
 @Injectable({ providedIn: 'root' })
 export class DeckApiService {
   private readonly apiClient = inject(ApiClientService);
 
-  getSeedDecks(): Observable<SeedDeckResponse> {
-    return this.apiClient.get<SeedDeckResponse>('/decks/seed');
+  listByPlayer(playerId: string): Observable<DeckResponse[]> {
+    return this.apiClient.get<DeckResponse[]>(`/decks?playerId=${playerId}`);
   }
 
-  getDeck(deckId: string): Observable<DeckModel> {
-    return this.apiClient.get<DeckModel>(`/decks/${deckId}`);
+  get(deckId: string): Observable<DeckResponse> {
+    return this.apiClient.get<DeckResponse>(`/decks/${deckId}`);
   }
 
-  createDeck(request: CreateDeckRequest): Observable<DeckModel> {
-    return this.apiClient.post<DeckModel>('/decks', request);
+  create(request: CreateDeckRequest): Observable<DeckResponse> {
+    return this.apiClient.post<DeckResponse>('/decks', request);
   }
 
-  validateDeck(cards: { cardId: string; quantity: number }[]): Observable<DeckValidationModel> {
-    return this.apiClient.post<DeckValidationModel>('/decks/validate', { cards });
+  update(deckId: string, req: UpdateDeckRequest): Observable<DeckResponse> {
+    return this.apiClient.put<DeckResponse>(`/decks/${deckId}`, req);
+  }
+
+  delete(deckId: string): Observable<void> {
+    return this.apiClient.delete<void>(`/decks/${deckId}`);
+  }
+
+  validate(deckId: string): Observable<DeckValidationResponse> {
+    return this.apiClient.post<DeckValidationResponse>(`/decks/${deckId}/validate`, {});
+  }
+
+  validateCards(cards: { cardId: string; quantity: number }[]): Observable<DeckValidationResponse> {
+    return this.apiClient.post<DeckValidationResponse>('/decks/validate', { cards });
   }
 }

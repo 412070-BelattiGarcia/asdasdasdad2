@@ -6,11 +6,11 @@ public class PokemonCardDefinition extends CardDefinition {
     private int hp;
     private String stage;
     private String evolvesFrom;
-    private List<String> types;
+    private List<EnergyType> types;
     private List<AttackDefinition> attacks;
     private List<WeaknessDefinition> weaknesses;
     private List<ResistanceDefinition> resistances;
-    private List<String> retreatCost;
+    private List<EnergyType> retreatCost;
     private boolean isEx;
     private boolean isMega;
 
@@ -20,16 +20,16 @@ public class PokemonCardDefinition extends CardDefinition {
     public void setStage(String stage) { this.stage = stage; }
     public String getEvolvesFrom() { return evolvesFrom; }
     public void setEvolvesFrom(String evolvesFrom) { this.evolvesFrom = evolvesFrom; }
-    public List<String> getTypes() { return types; }
-    public void setTypes(List<String> types) { this.types = types; }
+    public List<EnergyType> getTypes() { return types; }
+    public void setTypes(List<EnergyType> types) { this.types = types; }
     public List<AttackDefinition> getAttacks() { return attacks; }
     public void setAttacks(List<AttackDefinition> attacks) { this.attacks = attacks; }
     public List<WeaknessDefinition> getWeaknesses() { return weaknesses; }
     public void setWeaknesses(List<WeaknessDefinition> weaknesses) { this.weaknesses = weaknesses; }
     public List<ResistanceDefinition> getResistances() { return resistances; }
     public void setResistances(List<ResistanceDefinition> resistances) { this.resistances = resistances; }
-    public List<String> getRetreatCost() { return retreatCost; }
-    public void setRetreatCost(List<String> retreatCost) { this.retreatCost = retreatCost; }
+    public List<EnergyType> getRetreatCost() { return retreatCost; }
+    public void setRetreatCost(List<EnergyType> retreatCost) { this.retreatCost = retreatCost; }
     public boolean isEx() { return isEx; }
     public void setEx(boolean ex) { isEx = ex; }
     public boolean isMega() { return isMega; }
@@ -38,7 +38,7 @@ public class PokemonCardDefinition extends CardDefinition {
     public static class AttackDefinition {
         private int index;
         private String name;
-        private List<String> cost;
+        private List<EnergyType> cost;
         private String damage;
         private String text;
 
@@ -46,8 +46,8 @@ public class PokemonCardDefinition extends CardDefinition {
         public void setIndex(int index) { this.index = index; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
-        public List<String> getCost() { return cost; }
-        public void setCost(List<String> cost) { this.cost = cost; }
+        public List<EnergyType> getCost() { return cost; }
+        public void setCost(List<EnergyType> cost) { this.cost = cost; }
         public String getDamage() { return damage; }
         public void setDamage(String damage) { this.damage = damage; }
         public String getText() { return text; }
@@ -55,21 +55,21 @@ public class PokemonCardDefinition extends CardDefinition {
     }
 
     public static class WeaknessDefinition {
-        private String type;
+        private EnergyType type;
         private String value;
 
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
+        public EnergyType getType() { return type; }
+        public void setType(EnergyType type) { this.type = type; }
         public String getValue() { return value; }
         public void setValue(String value) { this.value = value; }
     }
 
     public static class ResistanceDefinition {
-        private String type;
+        private EnergyType type;
         private String value;
 
-        public String getType() { return type; }
-        public void setType(String type) { this.type = type; }
+        public EnergyType getType() { return type; }
+        public void setType(EnergyType type) { this.type = type; }
         public String getValue() { return value; }
         public void setValue(String value) { this.value = value; }
     }

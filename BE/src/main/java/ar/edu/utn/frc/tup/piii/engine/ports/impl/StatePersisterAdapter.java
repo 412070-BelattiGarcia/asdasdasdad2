@@ -9,59 +9,54 @@ import ar.edu.utn.frc.tup.piii.repositories.jpa.MatchStateJpaRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
 public class StatePersisterAdapter implements StatePersisterPort {
 
-    private final MatchStateJpaRepository matchStateJpaRepository;
     private final MatchJpaRepository matchJpaRepository;
+    private final MatchStateJpaRepository matchStateJpaRepository;
     private final ObjectMapper objectMapper;
 
-    public StatePersisterAdapter(MatchStateJpaRepository matchStateJpaRepository,
-                                  MatchJpaRepository matchJpaRepository,
+    public StatePersisterAdapter(MatchJpaRepository matchJpaRepository,
+                                  MatchStateJpaRepository matchStateJpaRepository,
                                   ObjectMapper objectMapper) {
-        this.matchStateJpaRepository = matchStateJpaRepository;
         this.matchJpaRepository = matchJpaRepository;
+        this.matchStateJpaRepository = matchStateJpaRepository;
         this.objectMapper = objectMapper;
     }
 
     @Override
     public void saveState(UUID matchId, GameState state) {
-        Optional<MatchEntity> matchOpt = matchJpaRepository.findById(matchId);
-        if (matchOpt.isEmpty()) {
-            return;
-        }
-        Optional<MatchStateEntity> existing = matchStateJpaRepository.findAll().stream()
-                .filter(ms -> ms.getMatch().getId().equals(matchId))
-                .max(Comparator.comparing(MatchStateEntity::getVersion));
-
-        MatchStateEntity entity = existing.orElseGet(MatchStateEntity::new);
-        entity.setMatch(matchOpt.get());
-        entity.setVersion(existing.map(ms -> ms.getVersion() + 1).orElse(1L));
         try {
-            entity.setSerializedState(objectMapper.writeValueAsString(state));
+            String json = objectMapper.writeValueAsString(state);
+
+            MatchEntity matchEntity = matchJpaRepository.findById(matchId)
+                    .orElseThrow(() -> new RuntimeException("Match not found: " + matchId));
+
+            Long nextVersion = matchStateJpaRepository.findTopByMatchIdOrderByVersionDesc(matchId)
+                    .map(ms -> ms.getVersion() + 1)
+                    .orElse(1L);
+
+            MatchStateEntity entity = new MatchStateEntity();
+            entity.setMatch(matchEntity);
+            entity.setVersion(nextVersion);
+            entity.setSerializedState(json);
+            matchStateJpaRepository.save(entity);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize GameState", e);
+            throw new RuntimeException("Failed to persist game state", e);
         }
-        matchStateJpaRepository.save(entity);
     }
 
     @Override
-    public Optional<GameState> loadState(UUID matchId) {
-        Optional<MatchStateEntity> latest = matchStateJpaRepository.findAll().stream()
-                .filter(ms -> ms.getMatch().getId().equals(matchId))
-                .max(Comparator.comparing(MatchStateEntity::getVersion));
-
-        if (latest.isEmpty()) {
-            return Optional.empty();
-        }
+    public GameState loadState(UUID matchId) {
+        Optional<MatchStateEntity> opt = matchStateJpaRepository.findTopByMatchIdOrderByVersionDesc(matchId);
+        if (opt.isEmpty()) return null;
         try {
-            return Optional.of(objectMapper.readValue(latest.get().getSerializedState(), GameState.class));
+            return objectMapper.readValue(opt.get().getSerializedState(), GameState.class);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to deserialize GameState", e);
+            throw new RuntimeException("Failed to deserialize game state", e);
         }
     }
 }

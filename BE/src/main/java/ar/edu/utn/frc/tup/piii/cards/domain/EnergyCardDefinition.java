@@ -3,11 +3,11 @@ package ar.edu.utn.frc.tup.piii.cards.domain;
 import java.util.List;
 
 public class EnergyCardDefinition extends CardDefinition {
-    private String energyCardType;
-    private List<String> provides;
+    private EnergyCardType energyCardType;
+    private List<EnergyType> provides;
 
-    public String getEnergyCardType() { return energyCardType; }
-    public void setEnergyCardType(String energyCardType) { this.energyCardType = energyCardType; }
-    public List<String> getProvides() { return provides; }
-    public void setProvides(List<String> provides) { this.provides = provides; }
+    public EnergyCardType getEnergyCardType() { return energyCardType; }
+    public void setEnergyCardType(EnergyCardType energyCardType) { this.energyCardType = energyCardType; }
+    public List<EnergyType> getProvides() { return provides; }
+    public void setProvides(List<EnergyType> provides) { this.provides = provides; }
 }

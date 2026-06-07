@@ -1,27 +1,40 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from './api-client.service';
+import { MatchStateResponse } from '../../shared/models/game-state.models';
+import { GameActionRequest, GameActionResponse } from '../../shared/models/game-action.models';
 
-export interface CreateMatchRequest {
-  playerName: string;
-  deckId: string;
-}
-
-export interface JoinMatchRequest {
-  playerName: string;
-  deckId: string;
+export interface MatchPlayerResponse {
+  playerId: string;
+  side: string;
+  displayName: string;
 }
 
 export interface MatchResponse {
-  matchId: string;
-  playerId: string;
-  side: string;
+  id: string;
   status: string;
+  currentPhase: string | null;
+  turnNumber: number;
+  currentPlayerId: string | null;
+  firstPlayerId: string | null;
+  winnerPlayerId: string | null;
+  finishReason: string | null;
+  players: MatchPlayerResponse[];
+  createdAt: string;
 }
 
-export interface MatchStateResponse {
-  publicState: unknown;
-  privateState: unknown;
+export interface CreateMatchRequest {
+  player1Id: string;
+  player1Name: string;
+  player1DeckId: string;
+  player2Name?: string;
+  player2DeckId?: string;
+}
+
+export interface JoinMatchRequest {
+  playerId: string;
+  playerName: string;
+  deckId: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,7 +53,7 @@ export class MatchApiService {
     return this.apiClient.get<MatchStateResponse>(`/matches/${matchId}/state?playerId=${playerId}`);
   }
 
-  sendAction(matchId: string, action: unknown): Observable<unknown> {
-    return this.apiClient.post<unknown>(`/matches/${matchId}/actions`, action);
+  sendAction(matchId: string, action: GameActionRequest): Observable<GameActionResponse> {
+    return this.apiClient.post<GameActionResponse>(`/matches/${matchId}/actions`, action);
   }
 }

@@ -12,6 +12,21 @@ public class GameEvent {
     private String message;
     private Map<String, Object> payload;
 
+    public GameEvent(String type,
+                     UUID matchId,
+                     int turnNumber,
+                     Instant createdAt,
+                     String message,
+                     Map<String, Object> payload) {
+        this.type = type;
+        this.matchId = matchId;
+        this.turnNumber = turnNumber;
+        this.createdAt = createdAt;
+        this.message = message;
+        this.payload = payload;
+    }
+
+
     public String getType() { return type; }
     public UUID getMatchId() { return matchId; }
     public int getTurnNumber() { return turnNumber; }

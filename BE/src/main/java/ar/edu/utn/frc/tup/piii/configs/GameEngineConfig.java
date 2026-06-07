@@ -1,31 +1,36 @@
 package ar.edu.utn.frc.tup.piii.configs;
 
 import ar.edu.utn.frc.tup.piii.engine.GameEngine;
-import ar.edu.utn.frc.tup.piii.engine.action.GameActionType;
-import ar.edu.utn.frc.tup.piii.engine.handlers.ActionHandler;
 import ar.edu.utn.frc.tup.piii.engine.ports.CardLookupPort;
+import ar.edu.utn.frc.tup.piii.engine.ports.DeckLoadPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.EventPublisherPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.RandomizerPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.StatePersisterPort;
 import ar.edu.utn.frc.tup.piii.engine.rules.RuleValidator;
-import ar.edu.utn.frc.tup.piii.engine.victory.VictoryConditionChecker;
+import ar.edu.utn.frc.tup.piii.engine.setup.SetupManager;
+import ar.edu.utn.frc.tup.piii.engine.turn.TurnManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Configuration
 public class GameEngineConfig {
 
     @Bean
-    public RuleValidator ruleValidator() {
-        return new RuleValidator();
+    public SetupManager setupManager(DeckLoadPort deckLoadPort,
+                                      CardLookupPort cardLookupPort,
+                                      RandomizerPort randomizerPort,
+                                      EventPublisherPort eventPublisherPort) {
+        return new SetupManager(deckLoadPort, cardLookupPort, randomizerPort, eventPublisherPort);
     }
 
     @Bean
-    public VictoryConditionChecker victoryConditionChecker() {
-        return new VictoryConditionChecker();
+    public TurnManager turnManager(RandomizerPort randomizerPort) {
+        return new TurnManager(randomizerPort);
+    }
+
+    @Bean
+    public RuleValidator ruleValidator(CardLookupPort cardLookupPort) {
+        return new RuleValidator(cardLookupPort);
     }
 
     @Bean
@@ -33,10 +38,9 @@ public class GameEngineConfig {
                                   RandomizerPort randomizerPort,
                                   StatePersisterPort statePersisterPort,
                                   EventPublisherPort eventPublisherPort,
-                                  RuleValidator ruleValidator,
-                                  VictoryConditionChecker victoryConditionChecker) {
-        Map<GameActionType, ActionHandler> handlers = new HashMap<>();
+                                  TurnManager turnManager,
+                                  RuleValidator ruleValidator) {
         return new GameEngine(cardLookupPort, randomizerPort, statePersisterPort,
-                eventPublisherPort, ruleValidator, victoryConditionChecker, handlers);
+                eventPublisherPort, turnManager, ruleValidator);
     }
 }

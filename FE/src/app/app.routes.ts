@@ -18,5 +18,9 @@ export const routes: Routes = [
     path: 'match',
     loadChildren: () => import('./features/match/routes').then((m) => m.matchRoutes),
   },
+  {
+    path: 'auth',
+    loadChildren: () => import('./features/auth/routes').then((m) => m.authRoutes),
+  },
   { path: '**', redirectTo: '/decks' },
 ];

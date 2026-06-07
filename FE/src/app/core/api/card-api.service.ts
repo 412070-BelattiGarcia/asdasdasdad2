@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from './api-client.service';
+import { CardDetailResponse, CardSummaryResponse, PaginatedCardsResponse } from '../../shared/models/card.models';
 
 export interface CardSearchRequest {
   query?: string;
@@ -10,20 +11,13 @@ export interface CardSearchRequest {
   size?: number;
 }
 
-export interface CardSummaryResponse {
-  id: string;
-  name: string;
-  supertype: string;
-  setCode: string;
-  number: string;
-  imageSmallUrl: string;
-}
+export type CardSearchResponse = PaginatedCardsResponse;
 
-export interface CardSearchResponse {
-  items: CardSummaryResponse[];
-  page: number;
-  size: number;
-  totalItems: number;
+export interface CardSyncResponse {
+  success: boolean;
+  message: string;
+  newCards: number;
+  updatedCards: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -40,7 +34,11 @@ export class CardApiService {
     return this.apiClient.get<CardSearchResponse>(`/cards?${params.toString()}`);
   }
 
-  getCardById(cardId: string): Observable<unknown> {
-    return this.apiClient.get<unknown>(`/cards/${cardId}`);
+  getCardById(cardId: string): Observable<CardDetailResponse> {
+    return this.apiClient.get<CardDetailResponse>(`/cards/${cardId}`);
+  }
+
+  syncCards(): Observable<CardSyncResponse> {
+    return this.apiClient.post<CardSyncResponse>('/cards/sync', {});
   }
 }

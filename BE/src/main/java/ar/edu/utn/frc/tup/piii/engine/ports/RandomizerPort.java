@@ -4,5 +4,6 @@ import java.util.List;
 
 public interface RandomizerPort {
     <T> T shuffleAndPick(List<T> items, int count);
+    <T> void shuffle(List<T> items);
     int nextInt(int bound);
 }

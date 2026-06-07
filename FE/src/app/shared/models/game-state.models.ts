@@ -6,10 +6,12 @@ export type PlayerSide = 'PLAYER_ONE' | 'PLAYER_TWO';
 
 export type SpecialCondition = 'ASLEEP' | 'BURNED' | 'CONFUSED' | 'PARALYZED' | 'POISONED';
 
+export type FinishReason = 'KNOCKOUT' | 'PRIZES' | 'DECK_OUT' | 'CONCEDE';
+
 export interface PublicGameStateModel {
   matchId: string;
-  status: MatchStatus;
-  phase: TurnPhase;
+  status: string;
+  phase: string;
   turnNumber: number;
   currentPlayerId: string;
   firstPlayerId: string;
@@ -18,17 +20,17 @@ export interface PublicGameStateModel {
 
 export interface PublicPlayerStateModel {
   playerId: string;
-  side: PlayerSide;
-  prizes: string[];
+  side: string;
   activePokemon: PublicPokemonSlotModel | null;
   bench: PublicPokemonSlotModel[];
+  prizes: string[];
 }
 
 export interface PublicPokemonSlotModel {
   instanceId: string;
   cardId: string;
   damageCounters: number;
-  specialConditions: SpecialCondition[];
+  specialConditions: string[];
   attachedCards: string[];
 }
 
@@ -50,7 +52,11 @@ export interface PrivateHandCardModel {
 export interface PrizeSlotModel {
   slot: number;
   known: boolean;
-  card: CardModel | null;
+  cardId: string | null;
 }
 
-import { CardModel } from './card.models';
+export interface MatchStateResponse {
+  matchId: string;
+  publicState: PublicGameStateModel;
+  privateState: PrivatePlayerStateModel;
+}

@@ -15,4 +15,11 @@ export const deckRoutes: Routes = [
         (m) => m.DeckBuilderPage,
       ),
   },
+  {
+    path: ':id/edit',
+    loadComponent: () =>
+      import('./pages/deck-builder-page/deck-builder-page').then(
+        (m) => m.DeckBuilderPage,
+      ),
+  },
 ];

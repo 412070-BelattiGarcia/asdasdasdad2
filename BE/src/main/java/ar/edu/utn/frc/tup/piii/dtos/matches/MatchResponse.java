@@ -1,9 +1,23 @@
 package ar.edu.utn.frc.tup.piii.dtos.matches;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.time.Instant;
+import java.util.List;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record MatchResponse(
-        String matchId,
-        String playerId,
-        String side,
-        String status
+        String id,
+        String status,
+        String currentPhase,
+        Integer turnNumber,
+        String currentPlayerId,
+        String firstPlayerId,
+        String winnerPlayerId,
+        String finishReason,
+        List<PlayerSummary> players,
+        Instant createdAt
 ) {
+    public record PlayerSummary(String playerId, String side, String displayName) {}
 }
+

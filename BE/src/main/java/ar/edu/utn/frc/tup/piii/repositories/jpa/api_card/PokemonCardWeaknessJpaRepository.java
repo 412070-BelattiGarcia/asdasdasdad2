@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 import ar.edu.utn.frc.tup.piii.repositories.entities.api_card.PokemonCardWeaknessEntity;
 
 @Repository
+@Deprecated
 public interface PokemonCardWeaknessJpaRepository extends JpaRepository<PokemonCardWeaknessEntity, java.util.UUID> {
 }

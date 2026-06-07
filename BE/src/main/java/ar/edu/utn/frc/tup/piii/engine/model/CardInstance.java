@@ -15,6 +15,7 @@ public class CardInstance {
 
     public UUID getInstanceId() { return instanceId; }
     public void setInstanceId(UUID instanceId) { this.instanceId = instanceId; }
+
     public String getCardDefinitionId() { return cardDefinitionId; }
     public void setCardDefinitionId(String cardDefinitionId) { this.cardDefinitionId = cardDefinitionId; }
 }
