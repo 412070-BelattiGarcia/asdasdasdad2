@@ -67,6 +67,7 @@ class TakePrizeCardHandlerTest {
         when(ctx.getState()).thenReturn(state);
         when(ctx.getPlayer(playerId)).thenReturn(player);
         when(state.getPendingPrizeOwnerPlayerId()).thenReturn(playerId);
+        when(state.getPendingPrizeCount()).thenReturn(1);
         when(state.getPlayers()).thenReturn(new PlayerState[]{p1, p2});
         when(player.getPrizes()).thenReturn(prizes);
         when(player.getHand()).thenReturn(hand);
@@ -81,24 +82,41 @@ class TakePrizeCardHandlerTest {
     }
 
     @Test
-    void shouldRejectWhenPlayerDoesNotOwnKO() {
+    void shouldTakePrizeFromOwnerRegardlessOfActionPlayer() {
+        PlayerState p1 = new PlayerState();
+        p1.setPlayerId(playerId);
+        p1.setPrizes(new ArrayList<>());
+        p1.setHand(new ArrayList<>());
+        p1.setBench(new ArrayList<>());
+        PlayerState p2 = new PlayerState();
+        p2.setPlayerId(otherPlayerId);
+        p2.setPrizes(new ArrayList<>());
+        p2.setHand(new ArrayList<>());
+        p2.setBench(new ArrayList<>());
+
         when(ctx.getState()).thenReturn(state);
-        when(ctx.getPlayer(otherPlayerId)).thenReturn(player);
+        when(ctx.getPlayer(playerId)).thenReturn(player);
         when(state.getPendingPrizeOwnerPlayerId()).thenReturn(playerId);
+        when(state.getPendingPrizeCount()).thenReturn(1);
+        when(state.getPlayers()).thenReturn(new PlayerState[]{p1, p2});
+        when(player.getPrizes()).thenReturn(prizes);
+        when(player.getHand()).thenReturn(hand);
+        when(player.getPlayerId()).thenReturn(playerId);
 
         handler.handle(ctx, createAction(otherPlayerId, 0));
 
-        assertEquals(1, prizes.size());
+        assertTrue(prizes.isEmpty());
+        assertEquals(1, hand.size());
     }
 
     @Test
     void shouldRejectWhenNoPendingKO() {
         when(ctx.getState()).thenReturn(state);
-        when(ctx.getPlayer(playerId)).thenReturn(player);
         when(state.getPendingPrizeOwnerPlayerId()).thenReturn(null);
 
         handler.handle(ctx, createAction(playerId, 0));
 
         assertEquals(1, prizes.size());
+        verify(state, never()).setPendingPrizeOwnerPlayerId(any());
     }
 }

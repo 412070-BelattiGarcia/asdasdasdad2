@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.engine.model;
 
 import ar.edu.utn.frc.tup.piii.engine.PlayerSide;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +16,9 @@ public class PlayerState {
     private PokemonInPlay activePokemon;
     private List<PokemonInPlay> bench;
     private int mulliganCount;
+    private boolean setupConfirmed;
+    private boolean initialMulliganResolved;
+    private List<List<String>> mulliganRevealedCards;
 
     public UUID getPlayerId() { return playerId; }
     public void setPlayerId(UUID playerId) { this.playerId = playerId; }
@@ -42,4 +46,20 @@ public class PlayerState {
 
     public int getMulliganCount() { return mulliganCount; }
     public void setMulliganCount(int mulliganCount) { this.mulliganCount = mulliganCount; }
+
+    public boolean isSetupConfirmed() { return setupConfirmed; }
+    public void setSetupConfirmed(boolean setupConfirmed) { this.setupConfirmed = setupConfirmed; }
+
+    public boolean isInitialMulliganResolved() { return initialMulliganResolved; }
+    public void setInitialMulliganResolved(boolean initialMulliganResolved) { this.initialMulliganResolved = initialMulliganResolved; }
+
+    public List<List<String>> getMulliganRevealedCards() { return mulliganRevealedCards; }
+    public void setMulliganRevealedCards(List<List<String>> mulliganRevealedCards) { this.mulliganRevealedCards = mulliganRevealedCards; }
+
+    public void addMulliganReveal(List<String> revealedCardIds) {
+        if (this.mulliganRevealedCards == null) {
+            this.mulliganRevealedCards = new ArrayList<>();
+        }
+        this.mulliganRevealedCards.add(revealedCardIds);
+    }
 }

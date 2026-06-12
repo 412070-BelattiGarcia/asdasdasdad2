@@ -6,7 +6,7 @@ persona-c-decks-frontend
 
 ## Purpose
 
-Definir la implementación FrontEnd de **Persona C — Gestión de Mazos** dentro de `features/decks/`.
+Definir la implementación FrontEnd de **Persona C — Gestión de Mazos** dentro de `features/decks/` usando Tailwind CSS.
 
 Este change cubre:
 
@@ -32,7 +32,9 @@ OpenSpec MUST read and obey:
 
 ## Scope
 
-El trabajo debe permanecer dentro de `FE/src/app/features/decks/` y solo consumir servicios/modelos ya existentes.
+El trabajo debe permanecer dentro de `FE/src/app/features/decks/`, solo consumir servicios/modelos ya existentes y construir la UI con Tailwind CSS.
+
+No se debe introducir CSS global ni SCSS.
 
 ### Components and pages in scope
 
@@ -202,8 +204,19 @@ El editor SHALL validar y guardar usando `DeckApiService`.
 - **WHEN** saving fails
 - **THEN** the system SHALL show a snackbar and remain on the page
 
+### Requirement: Deck pages use Tailwind layout rules
+La UI de Persona C SHALL implementarse con Tailwind CSS utilities.
+
+#### Scenario: Deck list styling
+- **WHEN** the deck list page renders
+- **THEN** the layout, buttons and badges SHALL use Tailwind utility classes
+
+#### Scenario: Deck builder styling
+- **WHEN** the deck builder page renders
+- **THEN** the two-panel desktop layout and stacked mobile layout SHALL use Tailwind utility classes
+
 ### Requirement: Layout adapts to mobile
-La página de builder SHALL usar dos paneles en desktop y apilado en mobile, siguiendo el breakpoint mobile definido por la UI del proyecto.
+La página de builder SHALL usar dos paneles en desktop y apilado en mobile, siguiendo el breakpoint mobile del proyecto (menor a 600px).
 
 #### Scenario: Wide screen
 - **WHEN** the viewport is wide enough for the desktop layout
@@ -218,6 +231,7 @@ La página de builder SHALL usar dos paneles en desktop y apilado en mobile, sig
 No implementar:
 
 - cambios en backend
+- CSS global o SCSS
 - `features/cards/`, `features/lobby/`, `features/match/`, `core/`
 - reglas nuevas de juego
 - sincronización de catálogo

@@ -38,7 +38,7 @@ export class RegisterPage {
     this.authService.register(this.form.value).subscribe({
       next: () => {
         this.notificationService.show('Registro exitoso', 'success');
-        setTimeout(() => this.router.navigate(['/decks']), 1500);
+        setTimeout(() => this.router.navigate(['/auth/login']), 1500);
       },
       error: (err) => {
         this.loading.set(false);

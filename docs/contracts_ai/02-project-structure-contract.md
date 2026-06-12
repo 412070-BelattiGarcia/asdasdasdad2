@@ -120,6 +120,22 @@ src/main/java/ar/edu/utn/frc/tup/piii/
       AttackResolver.java
       DamageCalculator.java                 (clase pública separada con DamageCalculatorResult record)
       EnergyRequirementValidator.java       (clase pública separada)
+    ability/
+      AbilityResolver.java                  (interface: resolve(EngineContext, PlayerState, PokemonInPlay, AbilityDefinition, Map<String,Object>))
+      AbilityRegistry.java                  (Map<String, AbilityResolver> by ability name)
+      resolvers/
+        MysticalFireResolver.java
+        WaterShurikenResolver.java
+        FairyTransferResolver.java
+        DriveOffResolver.java
+        StanceChangeResolver.java
+        UpsideDownEvolutionResolver.java
+      hooks/
+        FurCoatHook.java
+        SweetVeilHook.java
+        ForestsCurseHook.java
+        SpikyShieldHook.java
+        DestinyBurstHook.java
     event/
       GameEvent.java                        (type, matchId, turnNumber, createdAt, message, payload)
       GameEventType.java                    (14 valores: CARD_DRAWN, VICTORY_DECIDED, etc.)

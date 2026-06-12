@@ -4,5 +4,6 @@ public enum FinishReason {
     KNOCKOUT,
     PRIZES,
     DECK_OUT,
-    CONCEDE
+    CONCEDE,
+    SUDDEN_DEATH
 }

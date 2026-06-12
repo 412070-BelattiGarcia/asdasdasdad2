@@ -2,7 +2,9 @@ package ar.edu.utn.frc.tup.piii.engine.model;
 
 import ar.edu.utn.frc.tup.piii.engine.SpecialCondition;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class PokemonInPlay {
@@ -11,10 +13,12 @@ public class PokemonInPlay {
     private UUID ownerPlayerId;
     private int enteredTurnNumber;
     private boolean evolvedThisTurn;
+    private boolean faceDown;
     private int damageCounters;
     private List<SpecialCondition> specialConditions;
     private List<CardInstance> attachedEnergies;
     private UUID toolCardInstanceId;
+    private Set<String> abilitiesUsedThisTurn = new HashSet<>();
 
     public UUID getInstanceId() { return instanceId; }
     public void setInstanceId(UUID instanceId) { this.instanceId = instanceId; }
@@ -31,6 +35,9 @@ public class PokemonInPlay {
     public boolean isEvolvedThisTurn() { return evolvedThisTurn; }
     public void setEvolvedThisTurn(boolean evolvedThisTurn) { this.evolvedThisTurn = evolvedThisTurn; }
 
+    public boolean isFaceDown() { return faceDown; }
+    public void setFaceDown(boolean faceDown) { this.faceDown = faceDown; }
+
     public int getDamageCounters() { return damageCounters; }
     public void setDamageCounters(int damageCounters) { this.damageCounters = damageCounters; }
 
@@ -42,4 +49,7 @@ public class PokemonInPlay {
 
     public UUID getToolCardInstanceId() { return toolCardInstanceId; }
     public void setToolCardInstanceId(UUID toolCardInstanceId) { this.toolCardInstanceId = toolCardInstanceId; }
+
+    public Set<String> getAbilitiesUsedThisTurn() { return abilitiesUsedThisTurn; }
+    public void setAbilitiesUsedThisTurn(Set<String> abilitiesUsedThisTurn) { this.abilitiesUsedThisTurn = abilitiesUsedThisTurn; }
 }

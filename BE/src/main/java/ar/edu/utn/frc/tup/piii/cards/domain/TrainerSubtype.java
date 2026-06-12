@@ -4,5 +4,6 @@ public enum TrainerSubtype {
     ITEM,
     SUPPORTER,
     STADIUM,
-    ACE_SPEC
+    ACE_SPEC,
+    POKEMON_TOOL
 }

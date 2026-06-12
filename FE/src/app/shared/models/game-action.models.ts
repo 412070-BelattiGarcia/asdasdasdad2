@@ -8,7 +8,15 @@ export type GameActionType =
   | 'END_TURN'
   | 'DRAW_CARD'
   | 'CHOOSE_KNOCKOUT_REPLACEMENT'
-  | 'TAKE_PRIZE_CARD';
+  | 'TAKE_PRIZE_CARD'
+  | 'ATTACH_TOOL'
+  | 'SETUP_PLACE_ACTIVE'
+  | 'SETUP_PLACE_BENCH'
+  | 'SETUP_REMOVE_ACTIVE'
+  | 'SETUP_REMOVE_BENCH'
+  | 'CONFIRM_SETUP'
+  | 'RESOLVE_MULLIGAN_DRAW'
+  | 'RESOLVE_INITIAL_MULLIGAN';
 
 export type GameEventType =
   | 'CARD_DRAWN'
@@ -24,7 +32,11 @@ export type GameEventType =
   | 'PHASE_CHANGED'
   | 'STATE_UPDATED'
   | 'PRIZE_TAKEN'
-  | 'MULLIGAN_REVEALED';
+  | 'MULLIGAN_REVEALED'
+  | 'INITIAL_MULLIGAN_NEEDED'
+  | 'INITIAL_MULLIGAN_RESOLVED'
+  | 'MULLIGAN_DRAW_OPPORTUNITY'
+  | 'MULLIGAN_DRAW_RESOLVED';
 
 export interface GameActionRequest {
   type: GameActionType;

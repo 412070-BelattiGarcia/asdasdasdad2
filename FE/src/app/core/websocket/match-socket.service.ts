@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Client, IFrame, IMessage, StompSubscription } from '@stomp/stompjs';
 import { Observable, Subject } from 'rxjs';
 import SockJS from 'sockjs-client';
-import { GameEventDto } from '../../shared/models/game-action.models';
+import { GameActionResponse, GameEventDto } from '../../shared/models/game-action.models';
 import { PrivatePlayerStateModel } from '../../shared/models/game-state.models';
 
 export type ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'RECONNECTING';
@@ -20,6 +20,9 @@ export class MatchSocketService {
 
   private readonly _privateState = new Subject<PrivatePlayerStateModel>();
   readonly privateState$ = this._privateState.asObservable();
+
+  private readonly _actionErrors = new Subject<GameActionResponse['error']>();
+  readonly actionErrors$ = this._actionErrors.asObservable();
 
   private readonly _connectionStatus = new Subject<ConnectionStatus>();
   readonly connectionStatus$ = this._connectionStatus.asObservable();
@@ -89,16 +92,47 @@ export class MatchSocketService {
       `/topic/matches/${matchId}/events`,
       (message: IMessage) => {
         try {
-          const event: GameEventDto = JSON.parse(message.body);
-          this._publicEvents.next(event);
+          const response = JSON.parse(message.body);
+
+          // Standalone event (e.g., MULLIGAN_REVEALED published directly
+          // by EventPublisherPort during SetupManager.setup())
+          if (response.type && !response.publicState && !Array.isArray(response.events)) {
+            this._publicEvents.next({
+              type: response.type,
+              message: response.message ?? response.type,
+              payload: response.payload,
+            });
+            return;
+          }
+
+          if (response.publicState) {
+            this._publicEvents.next({
+              type: 'STATE_UPDATED',
+              message: 'State updated',
+              payload: { publicState: response.publicState },
+            });
+          }
+          if (response.error) {
+            this._actionErrors.next(response.error);
+          }
+          if (Array.isArray(response.events)) {
+            for (const eventType of response.events) {
+              if (eventType !== 'STATE_UPDATED') {
+                this._publicEvents.next({ type: eventType, message: eventType });
+              }
+            }
+          }
+          if (response.privateState) {
+            this._privateState.next(response.privateState);
+          }
         } catch {
-          this._publicEvents.next(message.body as unknown as GameEventDto);
+          // ignore parse errors
         }
       },
     );
 
     this.privateSub = this.client.subscribe(
-      `/queue/matches/${matchId}/${playerId}`,
+      `/topic/matches/${matchId}/player/${playerId}`,
       (message: IMessage) => {
         try {
           const state: PrivatePlayerStateModel = JSON.parse(message.body);

@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+.cdk-drag-preview {
+  opacity: 1 !important;
+  z-index: 10000 !important;
+  box-shadow: 0 0 0 3px #60a5fa, 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+.cdk-drag-placeholder {
+  min-width: 70px;
+  min-height: 100px;
+}

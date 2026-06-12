@@ -7,6 +7,8 @@ import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEventType;
 import ar.edu.utn.frc.tup.piii.engine.model.CardInstance;
 import ar.edu.utn.frc.tup.piii.engine.model.GameState;
+import ar.edu.utn.frc.tup.piii.engine.model.PlayerState;
+import ar.edu.utn.frc.tup.piii.engine.victory.FinishReason;
 import ar.edu.utn.frc.tup.piii.engine.victory.VictoryConditionChecker;
 
 import java.time.Instant;
@@ -15,42 +17,53 @@ import java.util.Map;
 import java.util.UUID;
 
 public class TakePrizeCardHandler implements GameHandler {
+
+    public TakePrizeCardHandler() {}
+
+    @Override
     public void handle(EngineContext ctx, GameAction action) {
-        var player = ctx.getPlayer(action.getPlayerId());
         GameState state = ctx.getState();
+        UUID ownerPlayerId = state.getPendingPrizeOwnerPlayerId();
+        int prizeCount = state.getPendingPrizeCount();
+        if (ownerPlayerId == null || prizeCount <= 0) return;
+        PlayerState player = ctx.getPlayer(ownerPlayerId);
+        takePrizeImmediate(ctx, player, prizeCount);
+    }
 
-        UUID pendingOwner = state.getPendingPrizeOwnerPlayerId();
-        if (pendingOwner == null || !pendingOwner.equals(action.getPlayerId())) return;
+    public static void takePrizeImmediate(EngineContext ctx, PlayerState player, int prizeCount) {
+        int taken = 0;
+        while (taken < prizeCount && !player.getPrizes().isEmpty()) {
+            CardInstance takenPrize = player.getPrizes().remove(0);
+            player.getHand().add(takenPrize);
+            taken++;
+        }
 
-        if (player.getPrizes().isEmpty()) return;
-
-        Integer prizeSlot = action.getPayloadInt("prizeSlot");
-        if (prizeSlot == null) prizeSlot = 0;
-
-        if (prizeSlot < 0 || prizeSlot >= player.getPrizes().size()) return;
-
-        CardInstance taken = player.getPrizes().remove(prizeSlot.intValue());
-        player.getHand().add(taken);
-        state.setPendingPrizeOwnerPlayerId(null);
         VictoryConditionChecker.VictoryCheckResult victoryResult =
-                VictoryConditionChecker.check(state, player.getPlayerId());
-
+                VictoryConditionChecker.check(ctx.getState(), player.getPlayerId());
         if (victoryResult.finished()) {
-            state.setWinnerPlayerId(victoryResult.winnerPlayerId());
-            state.setFinishReason(victoryResult.reason());
-            state.setStatus(MatchStatus.FINISHED);
+            ctx.getState().setPendingPrizeOwnerPlayerId(null);
+            ctx.getState().setPendingPrizeCount(0);
+            if (victoryResult.winnerPlayerId() != null) {
+                ctx.getState().setWinnerPlayerId(victoryResult.winnerPlayerId());
+                ctx.getState().setFinishReason(victoryResult.reason());
+                ctx.getState().setStatus(MatchStatus.FINISHED);
+            } else if (victoryResult.suddenDeath()) {
+                ctx.getState().setSuddenDeath(true);
+                ctx.getState().setStatus(MatchStatus.FINISHED);
+                ctx.getState().setFinishReason(FinishReason.SUDDEN_DEATH);
+            }
         }
 
         Map<String, Object> eventPayload = new HashMap<>();
         eventPayload.put("playerId", player.getPlayerId().toString());
         eventPayload.put("remainingPrizeCount", player.getPrizes().size());
-        eventPayload.put("prizeSlot", prizeSlot);
+        eventPayload.put("prizeCount", taken);
         ctx.addEvent(new GameEvent(
                 GameEventType.PRIZE_TAKEN.name(),
-                state.getMatchId(),
-                state.getTurnNumber(),
+                ctx.getState().getMatchId(),
+                ctx.getState().getTurnNumber(),
                 Instant.now(),
-                "Prize card taken.",
+                taken + " prize card(s) taken.",
                 eventPayload
         ));
     }

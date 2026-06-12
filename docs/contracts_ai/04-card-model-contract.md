@@ -51,6 +51,15 @@ Extends CardDefinition.
 - retreatCost: List<EnergyType>
 - isEx: boolean
 - isMega: boolean
+- abilities: List<AbilityDefinition>
+
+### AbilityDefinition
+
+Clase en `cards/domain/AbilityDefinition.java`:
+
+- name: String
+- text: String
+- type: AbilityType
 
 ### AttackDefinition (anidada en PokemonCardDefinition)
 

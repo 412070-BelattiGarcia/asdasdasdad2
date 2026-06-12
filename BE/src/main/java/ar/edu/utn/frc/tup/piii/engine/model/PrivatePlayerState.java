@@ -9,6 +9,7 @@ public class PrivatePlayerState {
     private int deckCount;
     private int discardCount;
     private List<PrizeSlot> prizes;
+    private int pendingMulliganDrawCount;
 
     public PrivatePlayerState() {}
     public PrivatePlayerState(UUID playerId, List<PrivateHandCard> hand, int deckCount, int discardCount, List<PrizeSlot> prizes) {
@@ -31,7 +32,8 @@ public class PrivatePlayerState {
     public void setDiscardCount(int discardCount) { this.discardCount = discardCount; }
     public void setPrizes(List<PrizeSlot> prizes) { this.prizes = prizes; }
 
-
+    public int getPendingMulliganDrawCount() { return pendingMulliganDrawCount; }
+    public void setPendingMulliganDrawCount(int pendingMulliganDrawCount) { this.pendingMulliganDrawCount = pendingMulliganDrawCount; }
 
     public static class PrivateHandCard {
         private String instanceId;

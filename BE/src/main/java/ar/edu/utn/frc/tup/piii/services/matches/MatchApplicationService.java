@@ -2,6 +2,7 @@ package ar.edu.utn.frc.tup.piii.services.matches;
 
 import ar.edu.utn.frc.tup.piii.dtos.matches.*;
 import ar.edu.utn.frc.tup.piii.engine.GameEngine;
+import ar.edu.utn.frc.tup.piii.engine.MatchStatus;
 import ar.edu.utn.frc.tup.piii.engine.action.ActionResult;
 import ar.edu.utn.frc.tup.piii.engine.action.GameAction;
 import ar.edu.utn.frc.tup.piii.engine.action.GameActionType;
@@ -9,18 +10,23 @@ import ar.edu.utn.frc.tup.piii.engine.action.GameError;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.model.GameState;
 import ar.edu.utn.frc.tup.piii.engine.model.PrivatePlayerState;
+
+import java.time.Instant;
 import ar.edu.utn.frc.tup.piii.engine.ports.DeckLoadPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.StatePersisterPort;
 import ar.edu.utn.frc.tup.piii.engine.setup.SetupManager;
 import ar.edu.utn.frc.tup.piii.exceptions.ConflictException;
 import ar.edu.utn.frc.tup.piii.exceptions.NotFoundException;
 import ar.edu.utn.frc.tup.piii.exceptions.ValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ar.edu.utn.frc.tup.piii.mappers.matches.MatchMapper;
 import ar.edu.utn.frc.tup.piii.repositories.entities.MatchEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.MatchPlayerEntity;
 import ar.edu.utn.frc.tup.piii.repositories.jpa.MatchJpaRepository;
 import ar.edu.utn.frc.tup.piii.repositories.jpa.MatchPlayerJpaRepository;
 import ar.edu.utn.frc.tup.piii.repositories.jpa.PlayerJpaRepository;
+import ar.edu.utn.frc.tup.piii.services.ranking.PlayerStatsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,8 +49,10 @@ public class MatchApplicationService {
     private final MatchPlayerJpaRepository matchPlayerJpaRepository;
 
     private final PlayerJpaRepository playerJpaRepository;
+    private final PlayerStatsService playerStatsService;
     private final ConcurrentHashMap<UUID, ReentrantLock> matchLocks = new ConcurrentHashMap<>();
     private static final long LOCK_TIMEOUT_SECONDS = 10;
+    private static final Logger log = LoggerFactory.getLogger(MatchApplicationService.class);
 
     public MatchApplicationService(GameEngine gameEngine,
                                     SetupManager setupManager,
@@ -54,7 +62,8 @@ public class MatchApplicationService {
                                     MatchQueryService matchQueryService,
                                     MatchJpaRepository matchJpaRepository,
                                     MatchPlayerJpaRepository matchPlayerJpaRepository,
-                                    PlayerJpaRepository playerJpaRepository) {
+                                    PlayerJpaRepository playerJpaRepository,
+                                    PlayerStatsService playerStatsService) {
         this.gameEngine = gameEngine;
         this.setupManager = setupManager;
         this.statePersisterPort = statePersisterPort;
@@ -64,6 +73,7 @@ public class MatchApplicationService {
         this.matchJpaRepository = matchJpaRepository;
         this.matchPlayerJpaRepository = matchPlayerJpaRepository;
         this.playerJpaRepository = playerJpaRepository;
+        this.playerStatsService = playerStatsService;
     }
 
     @Transactional
@@ -117,9 +127,10 @@ public class MatchApplicationService {
             deckLoadPort.loadDeck(deck2Id);
 
             GameState gameState = setupManager.setup(match.getId(), player1Id, player2Id, deck1Id, deck2Id);
+            SetupManager.revealAllPokemon(gameState);
             statePersisterPort.saveState(match.getId(), gameState);
 
-            match.setStatus("ACTIVE");
+            match.setStatus(gameState.getStatus().name());
             match.setCurrentPlayerId(gameState.getCurrentPlayerId());
             match.setFirstPlayerId(gameState.getFirstPlayerId());
             match.setTurnNumber(gameState.getTurnNumber());
@@ -162,17 +173,30 @@ public class MatchApplicationService {
         UUID deck1Id = player1.getDeckId();
         UUID deck2Id = player2.getDeckId();
 
+        log.warn("[joinMatch] loading decks for match {}", matchId);
         deckLoadPort.loadDeck(deck1Id);
         deckLoadPort.loadDeck(deck2Id);
 
-        GameState gameState = setupManager.setup(matchId, player1.getPlayerId(), player2Id, deck1Id, deck2Id);
-        statePersisterPort.saveState(matchId, gameState);
+        log.warn("[joinMatch] setting up match {}", matchId);
+        GameState gameState;
+        try {
+            gameState = setupManager.setup(matchId, player1.getPlayerId(), player2Id, deck1Id, deck2Id);
+            SetupManager.revealAllPokemon(gameState);
+        } catch (Exception e) {
+            log.error("[joinMatch] setup FAILED for match {}: {}", matchId, e.getMessage(), e);
+            throw e;
+        }
+        log.warn("[joinMatch] setup complete for match {}", matchId);
 
-        match.setStatus("ACTIVE");
+        statePersisterPort.saveState(matchId, gameState);
+        log.warn("[joinMatch] state saved for match {}", matchId);
+
+        match.setStatus(gameState.getStatus().name());
         match.setCurrentPlayerId(gameState.getCurrentPlayerId());
         match.setFirstPlayerId(gameState.getFirstPlayerId());
         match.setTurnNumber(gameState.getTurnNumber());
         match = matchJpaRepository.save(match);
+        log.warn("[joinMatch] match {} set to {}", matchId, gameState.getStatus().name());
 
         List<MatchPlayerEntity> allPlayers = new ArrayList<>(existingPlayers);
         allPlayers.add(player2);
@@ -205,20 +229,33 @@ public class MatchApplicationService {
             UUID playerUuid = UUID.fromString(request.playerId());
             ActionResult result = gameEngine.applyAction(matchId, playerUuid, action);
 
+            GameState state = null;
             if (result.getPublicState() == null) {
-                GameState state = gameEngine.loadState(matchId);
+                state = gameEngine.loadState(matchId);
                 if (state != null) {
                     result.setPublicState(matchQueryService.buildPublicState(state));
                     result.setPrivateState(matchQueryService.buildPrivateState(state, playerUuid));
                 }
             }
 
-            List<GameActionResponse.GameEventDto> eventDtos = result.getEvents() != null
+            if (state != null && state.getStatus() == MatchStatus.FINISHED) {
+                var optMatch = matchJpaRepository.findById(matchId);
+                if (optMatch.isPresent()) {
+                    var match = optMatch.get();
+                    match.setWinnerPlayerId(state.getWinnerPlayerId());
+                    match.setFinishReason(
+                            state.getFinishReason() != null ? state.getFinishReason().name() : null);
+                    match.setFinishedAt(Instant.now());
+                    match.setStatus("FINISHED");
+                    matchJpaRepository.save(match);
+                }
+                playerStatsService.recordMatchResult(
+                        matchId, state.getWinnerPlayerId(), state.getFinishReason());
+            }
+
+            List<String> eventTypes = result.getEvents() != null
                     ? result.getEvents().stream()
-                    .map(e -> new GameActionResponse.GameEventDto(
-                            e.getType(),
-                            e.getMessage(),
-                            e.getPayload()))
+                    .map(e -> e.getType())
                     .collect(Collectors.toList())
                     : List.of();
 
@@ -236,7 +273,7 @@ public class MatchApplicationService {
                     result.getClientRequestId(),
                     result.getPublicState(),
                     result.getPrivateState(),
-                    eventDtos,
+                    eventTypes,
                     errorDto
             );
         } finally {
@@ -262,6 +299,17 @@ public class MatchApplicationService {
             return "PLAYER";
         }
         throw new ValidationException("Player not found: " + playerId);
+    }
+
+    public List<MatchResponse> listAvailableMatches(String status) {
+        String effectiveStatus = status != null ? status : "WAITING";
+        List<MatchEntity> matches = matchJpaRepository.findByStatus(effectiveStatus);
+        return matches.stream()
+                .map(m -> {
+                    List<MatchPlayerEntity> players = matchPlayerJpaRepository.findByMatch_Id(m.getId());
+                    return matchMapper.toMatchResponse(m, players);
+                })
+                .toList();
     }
 
     public MatchStateResponse getMatchState(UUID matchId, UUID playerId) {

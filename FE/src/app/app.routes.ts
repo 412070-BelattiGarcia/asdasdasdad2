@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/decks', pathMatch: 'full' },
+  { path: '', redirectTo: '/home', pathMatch: 'full' },
   {
     path: 'cards',
     loadChildren: () => import('./features/cards/routes').then((m) => m.cardRoutes),
@@ -22,5 +22,13 @@ export const routes: Routes = [
     path: 'auth',
     loadChildren: () => import('./features/auth/routes').then((m) => m.authRoutes),
   },
-  { path: '**', redirectTo: '/decks' },
+  {
+    path: 'home',
+    loadChildren: () => import('./features/home/routes').then((m) => m.homeRoutes),
+  },
+  {
+    path: 'ranking',
+    loadChildren: () => import('./features/ranking/routes').then((m) => m.rankingRoutes),
+  },
+  { path: '**', redirectTo: '/home' },
 ];

@@ -1,5 +1,11 @@
 package ar.edu.utn.frc.tup.piii.engine.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class TurnFlags {
     private boolean hasDrawnForTurn;
     private boolean hasAttachedEnergy;
@@ -7,6 +13,7 @@ public class TurnFlags {
     private boolean hasPlayedSupporter;
     private boolean hasPlayedStadium;
     private boolean hasAttacked;
+    private Map<String, Object> damageModifiers;
 
     public boolean hasDrawnForTurn() { return hasDrawnForTurn; }
     public void setHasDrawnForTurn(boolean hasDrawnForTurn) { this.hasDrawnForTurn = hasDrawnForTurn; }
@@ -25,4 +32,7 @@ public class TurnFlags {
 
     public boolean hasAttacked() { return hasAttacked; }
     public void setHasAttacked(boolean hasAttacked) { this.hasAttacked = hasAttacked; }
+
+    public Map<String, Object> getDamageModifiers() { return damageModifiers; }
+    public void setDamageModifiers(Map<String, Object> damageModifiers) { this.damageModifiers = damageModifiers; }
 }

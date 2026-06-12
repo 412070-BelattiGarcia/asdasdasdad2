@@ -18,6 +18,8 @@ controllers/users/
   UserController.java
 controllers/players/
   PlayerController.java
+controllers/ranking/
+  RankingController.java
 ```
 
 ## Frontend location
@@ -73,6 +75,8 @@ core/api/
 - `GET /api/decks?playerId={id}`
 - `POST /api/decks/{id}/validate`
 - `POST /api/decks/validate`
+- `GET /api/ranking`
+- `GET /api/players/{id}/stats`
 
 ## POST /api/users/register
 
@@ -393,7 +397,38 @@ Response:
 
 ## GET /api/cards/{id}
 
-Response: `CardDetailResponse` con información completa de la carta.
+Response: `CardDetailResponse` con información completa de la carta. Para Pokémon, incluye la lista de habilidades:
+
+```json
+{
+  "id": "xy1-85",
+  "name": "Aegislash",
+  "supertype": "POKEMON",
+  "subtypes": ["Stage 2"],
+  "setCode": "xy1",
+  "number": "85",
+  "imageSmallUrl": "https://images.pokemontcg.io/xy1/85.png",
+  "imageLargeUrl": "https://images.pokemontcg.io/xy1/85_hires.png",
+  "rulesText": [],
+  "hp": 140,
+  "stage": "STAGE_2",
+  "evolvesFrom": "Doublade",
+  "types": ["METAL"],
+  "attacks": [...],
+  "weaknesses": [...],
+  "resistances": [...],
+  "retreatCost": ["COLORLESS", "COLORLESS", "COLORLESS"],
+  "isEx": false,
+  "isMega": false,
+  "abilities": [
+    {
+      "name": "Stance Change",
+      "text": "Once during your turn, if this Pokémon is a Stance Change Pokémon, you may switch this Pokémon with an Aegislash from your hand.",
+      "type": "POKEMON_POWER"
+    }
+  ]
+}
+```
 
 ## POST /api/cards/sync
 
@@ -482,8 +517,45 @@ Valida cartas sin necesidad de un deck persistido. Request: `ValidateDeckRequest
 
 Response: `DeckValidationResponse`.
 
+## GET /api/ranking
+
+Response (200):
+```json
+{
+  "items": [
+    {
+      "rank": 1,
+      "playerId": "player-uuid",
+      "displayName": "Santi",
+      "totalWins": 10,
+      "totalLosses": 3,
+      "winRate": 0.77,
+      "currentWinStreak": 5,
+      "maxWinStreak": 5
+    }
+  ]
+}
+```
+
+Ordenado por `totalWins` descendente, luego `maxWinStreak` descendente.
+
+## GET /api/players/{id}/stats
+
+Response (200):
+```json
+{
+  "playerId": "player-uuid",
+  "displayName": "Santi",
+  "totalWins": 10,
+  "totalLosses": 3,
+  "currentWinStreak": 5,
+  "maxWinStreak": 5
+}
+```
+
+Para jugadores sin partidas: todos los campos numéricos en 0.
+
 ## Post-MVP endpoints
 
 Not yet implemented:
-- `/api/ranking`
 - `/api/chat`

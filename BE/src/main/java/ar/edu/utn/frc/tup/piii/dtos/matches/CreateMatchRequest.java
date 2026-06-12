@@ -1,11 +1,15 @@
 package ar.edu.utn.frc.tup.piii.dtos.matches;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.NotBlank;
 
 public class CreateMatchRequest {
 
+    @NotBlank
     private String player1Id;
+    @NotBlank
     private String player1Name;
+    @NotBlank
     private String player1DeckId;
     private String player2Id;
     private String player2Name;

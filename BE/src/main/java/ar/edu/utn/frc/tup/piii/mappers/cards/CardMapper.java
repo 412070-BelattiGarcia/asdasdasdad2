@@ -1,5 +1,8 @@
 package ar.edu.utn.frc.tup.piii.mappers.cards;
 
+import ar.edu.utn.frc.tup.piii.cards.domain.AbilityDefinition;
+import ar.edu.utn.frc.tup.piii.cards.domain.AbilityType;
+import ar.edu.utn.frc.tup.piii.dtos.cards.AbilityDto;
 import ar.edu.utn.frc.tup.piii.dtos.cards.AttackDto;
 import ar.edu.utn.frc.tup.piii.dtos.cards.PokemonTcgApiCardDto;
 import ar.edu.utn.frc.tup.piii.dtos.cards.ResistanceDto;
@@ -141,6 +144,10 @@ public class CardMapper {
                 ? entity.getResistances().stream().map(this::toResistanceDto).collect(Collectors.toList())
                 : List.of();
 
+        List<AbilityDto> abilities = entity.getAbilities() != null && !entity.getAbilities().isBlank()
+                ? toAbilityDtoList(entity.getAbilities())
+                : List.of();
+
         return new CardDetailResponse(
                 entity.getId(),
                 entity.getName(),
@@ -160,7 +167,8 @@ public class CardMapper {
                 resistances,
                 retreatCost,
                 entity.getIsEx(),
-                entity.getIsMega()
+                entity.getIsMega(),
+                abilities
         );
     }
 
@@ -245,12 +253,48 @@ public class CardMapper {
         return supertype.replace('é', 'e').replace('É', 'E').toUpperCase();
     }
 
+    public List<AbilityDefinition> toAbilityDefinitions(String jsonAbilities) {
+        if (jsonAbilities == null || jsonAbilities.isBlank()) return List.of();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AbilityDto[] dtos = mapper.readValue(jsonAbilities, AbilityDto[].class);
+            List<AbilityDefinition> result = new ArrayList<>();
+            for (AbilityDto dto : dtos) {
+                AbilityType type = mapAbilityType(dto.type());
+                result.add(new AbilityDefinition(dto.name(), dto.text(), type));
+            }
+            return result;
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+    }
+
+    private AbilityType mapAbilityType(String apiType) {
+        if (apiType == null) return AbilityType.ABILITY;
+        if (apiType.contains("Power")) return AbilityType.POKEMON_POWER;
+        if (apiType.contains("Body")) return AbilityType.POKEMON_BODY;
+        return AbilityType.ABILITY;
+    }
+
+    private List<AbilityDto> toAbilityDtoList(String jsonAbilities) {
+        if (jsonAbilities == null || jsonAbilities.isBlank()) return List.of();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return List.of(mapper.readValue(jsonAbilities, AbilityDto[].class));
+        } catch (JsonProcessingException e) {
+            return List.of();
+        }
+    }
+
     private String determineStage(List<String> subtypes) {
         if (subtypes == null) return null;
-        if (subtypes.contains("MEGA")) return "MEGA";
-        if (subtypes.contains("STAGE 2")) return "STAGE_2";
-        if (subtypes.contains("STAGE 1")) return "STAGE_1";
-        if (subtypes.contains("BASIC")) return "BASIC";
+        for (String s : subtypes) {
+            String normalized = s.toUpperCase().replace(" ", "_");
+            if ("MEGA".equals(normalized)) return "MEGA";
+            if ("STAGE_2".equals(normalized)) return "STAGE_2";
+            if ("STAGE_1".equals(normalized)) return "STAGE_1";
+            if ("BASIC".equals(normalized)) return "BASIC";
+        }
         return null;
     }
 }

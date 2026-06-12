@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.cards.domain.CardDefinition;
 import ar.edu.utn.frc.tup.piii.cards.domain.PokemonCardDefinition;
 import ar.edu.utn.frc.tup.piii.engine.EngineContext;
 import ar.edu.utn.frc.tup.piii.engine.action.GameAction;
+import ar.edu.utn.frc.tup.piii.engine.action.GameError;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEventType;
 import ar.edu.utn.frc.tup.piii.engine.model.CardInstance;
@@ -18,18 +19,33 @@ import java.util.UUID;
 public class PutBasicOnBenchHandler implements GameHandler {
     public void handle(EngineContext ctx, GameAction action) {
         Integer handIndex = action.getPayloadInt("handIndex");
-        if (handIndex == null) return;
+        if (handIndex == null) {
+            ctx.setError(new GameError("INVALID_HAND_INDEX", "handIndex is required"));
+            return;
+        }
         var player = ctx.getPlayer(action.getPlayerId());
 
-        if (handIndex < 0 || handIndex >= player.getHand().size()) return;
+        if (handIndex < 0 || handIndex >= player.getHand().size()) {
+            ctx.setError(new GameError("INVALID_HAND_INDEX", "handIndex out of bounds"));
+            return;
+        }
         CardInstance card = player.getHand().get(handIndex);
 
         CardDefinition def = ctx.getCardLookup().getCardById(card.getCardDefinitionId());
-        if (!(def instanceof PokemonCardDefinition pokemonCardDef)) return;
+        if (!(def instanceof PokemonCardDefinition pokemonCardDef)) {
+            ctx.setError(new GameError("NOT_A_POKEMON", "Card is not a Pokemon"));
+            return;
+        }
 
-        if (!"BASIC".equals(pokemonCardDef.getStage())) return;
+        if (!"BASIC".equals(pokemonCardDef.getStage())) {
+            ctx.setError(new GameError("NOT_BASIC_POKEMON", "Only Basic Pokemon can be placed on bench"));
+            return;
+        }
 
-        if (player.getBench().size() >= 5) return;
+        if (player.getBench().size() >= 5) {
+            ctx.setError(new GameError("BENCH_FULL", "Bench is full"));
+            return;
+        }
 
         player.getHand().remove(handIndex);
 

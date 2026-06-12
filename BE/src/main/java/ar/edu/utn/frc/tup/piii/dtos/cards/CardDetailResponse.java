@@ -21,6 +21,7 @@ public record CardDetailResponse(
         List<ResistanceDto> resistances,
         List<String> retreatCost,
         Boolean isEx,
-        Boolean isMega
+        Boolean isMega,
+        List<AbilityDto> abilities
 ) {
 }

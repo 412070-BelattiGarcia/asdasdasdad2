@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.engine.handlers;
 import ar.edu.utn.frc.tup.piii.cards.domain.PokemonCardDefinition;
 import ar.edu.utn.frc.tup.piii.engine.EngineContext;
 import ar.edu.utn.frc.tup.piii.engine.action.GameAction;
+import ar.edu.utn.frc.tup.piii.engine.attack.StatusEffectManager;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEventType;
 import ar.edu.utn.frc.tup.piii.engine.model.CardInstance;
@@ -58,6 +59,7 @@ public class EvolvePokemonHandler implements GameHandler {
         evolved.setAttachedEnergies(target.getAttachedEnergies());
         evolved.setEvolvedThisTurn(true);
         evolved.setEnteredTurnNumber(state.getTurnNumber());
+        StatusEffectManager.clearConditionsOnEvolveOrRetreat(evolved);
 
         if (player.getActivePokemon() != null &&
                 player.getActivePokemon().getInstanceId().equals(targetPokemonInstanceId)) {

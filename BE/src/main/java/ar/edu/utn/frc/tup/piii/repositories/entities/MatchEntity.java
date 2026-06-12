@@ -62,9 +62,6 @@ public class MatchEntity {
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<MatchStateEntity> states = new ArrayList<>();
 
-    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<MatchLogEntity> logs = new ArrayList<>();
-
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();

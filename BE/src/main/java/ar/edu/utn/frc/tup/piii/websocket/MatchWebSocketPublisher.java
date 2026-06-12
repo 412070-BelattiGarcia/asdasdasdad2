@@ -4,6 +4,10 @@ import ar.edu.utn.frc.tup.piii.dtos.matches.GameActionResponse;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.model.PrivatePlayerState;
 import ar.edu.utn.frc.tup.piii.engine.ports.EventPublisherPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -13,15 +17,20 @@ import java.util.UUID;
 @Component
 public class MatchWebSocketPublisher implements EventPublisherPort {
 
-    private final SimpMessagingTemplate messagingTemplate;
+    private static final Logger log = LoggerFactory.getLogger(MatchWebSocketPublisher.class);
 
-    public MatchWebSocketPublisher(SimpMessagingTemplate messagingTemplate) {
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
+
+    public MatchWebSocketPublisher(SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
         this.messagingTemplate = messagingTemplate;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public void publishEvents(UUID matchId, List<GameEvent> events) {
         String destination = "/topic/matches/" + matchId + "/events";
+        logSize("publishEvents", destination, events);
         messagingTemplate.convertAndSend(destination, events);
     }
 
@@ -35,11 +44,22 @@ public class MatchWebSocketPublisher implements EventPublisherPort {
                 response.events(),
                 response.error()
         );
+        logSize("publishPublicState", destination, publicResponse);
         messagingTemplate.convertAndSend(destination, publicResponse);
     }
 
     public void publishPrivateState(UUID matchId, UUID playerId, PrivatePlayerState privateState) {
-        String destination = "/queue/matches/" + matchId + "/" + playerId;
+        String destination = "/topic/matches/" + matchId + "/player/" + playerId;
+        logSize("publishPrivateState(" + playerId + ")", destination, privateState);
         messagingTemplate.convertAndSend(destination, privateState);
+    }
+
+    private void logSize(String method, String destination, Object payload) {
+        try {
+            byte[] bytes = objectMapper.writeValueAsBytes(payload);
+            log.warn("[{}] -> {} : {} bytes", method, destination, bytes.length);
+        } catch (JsonProcessingException e) {
+            log.warn("[{}] -> {} : unable to serialize", method, destination, e);
+        }
     }
 }

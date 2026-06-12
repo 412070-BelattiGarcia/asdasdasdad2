@@ -7,9 +7,8 @@ public record GameActionResponse(
         String clientRequestId,
         Object publicState,
         Object privateState,
-        List<GameEventDto> events,
+        List<String> events,
         ErrorDto error
 ) {
-    public record GameEventDto(String type, String message, Object payload) {}
     public record ErrorDto(String code, String message, Object details) {}
 }

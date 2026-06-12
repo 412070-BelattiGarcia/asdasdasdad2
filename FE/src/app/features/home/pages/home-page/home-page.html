@@ -1,0 +1,122 @@
+<!-- home-page.html -->
+
+<!--
+  ════════════════════════════════════════════════════════════════════
+  ASSETS — donde van los archivos
+  ════════════════════════════════════════════════════════════════════
+
+  FONDO:
+    src/assets/images/bg-lavender-town.jpg
+    Para cambiarlo: reemplaza el archivo, o pasa otra ruta via
+    el input [bgImage]="'assets/images/otro-fondo.jpg'" al usar
+    el componente. El CSS lee la variable --bg-image que se setea
+    con [style] en el host (ver abajo).
+
+  LOGO SVG:
+    src/assets/images/pokemon-logo.svg
+    Para cambiarlo: reemplaza el archivo, o pasa otra ruta via
+    el input [logoSvg]="'assets/images/otro-logo.svg'".
+
+  ════════════════════════════════════════════════════════════════════
+-->
+
+<div
+  class="page"
+  [class.is-transitioning]="transitioning()"
+  [style.--bg-image]="'url(' + bgImage() + ')'"
+>
+
+  @if (showSplash()) {
+
+    <div class="splash">
+
+      <div class="splash__bg" aria-hidden="true">
+        <div class="splash__scanlines"></div>
+      </div>
+
+      <div class="splash__content">
+        <!--
+          Logo svg aca
+        -->
+        <div class="splash__logo-wrap" aria-label="Pokemon">
+          <img
+            class="splash__logo"
+            src="assets/images/pokemon-tcg.svg"
+            alt="Pokemon"
+          />
+          <div class="splash__logo-shine" aria-hidden="true"></div>
+        </div>
+
+        <img
+          class="splash__xy"
+          src="assets/images/xy-symbols.png"
+          alt=""
+          aria-hidden="true"
+        />
+
+        <p class="splash__version">{{ gameVersion() }}</p>
+
+        <p class="splash__press-key" aria-live="polite">
+          PRESIONA CUALQUIER TECLA
+        </p>
+
+      </div>
+
+      <footer class="splash__footer">{{ footerText() }}</footer>
+
+    </div>
+
+  } @else {
+
+    <div class="hub">
+
+      <header class="hub__header">
+        <span class="hub__greeting">BIENVENIDO,</span>
+        <span class="hub__username">{{ displayName() }}</span>
+      </header>
+
+      <main class="hub__cards">
+
+        @if (statsError()) {
+          <div class="hub__error" role="alert">
+            <span>No se pudieron cargar los datos.</span>
+            <button class="hub__retry" (click)="loadStats()">
+              REINTENTAR
+            </button>
+          </div>
+        }
+
+        @for (card of menuCards(); track card.route) {
+          <button
+            class="hub__card"
+            (click)="navigate(card.route)"
+            [attr.aria-label]="card.label"
+          >
+            <span class="hub__card-label">{{ card.label }}</span>
+
+            @if (loadingStats()) {
+              <span class="hub__card-sub hub__card-sub--skeleton" aria-hidden="true"></span>
+            } @else if (card.subtitle()) {
+              <span class="hub__card-sub">{{ card.subtitle() }}</span>
+            }
+
+            <span class="hub__card-arrow" aria-hidden="true">&#9658;</span>
+          </button>
+        }
+
+      </main>
+
+      <footer class="hub__footer">
+        <span class="hub__footer-user">{{ displayName() }}</span>
+        <span class="hub__footer-sep" aria-hidden="true">&bull;</span>
+        <button class="hub__logout" (click)="logout()">CERRAR SESION</button>
+      </footer>
+
+    </div>
+
+  }
+
+  <!-- Flash blanco de transicion -->
+  <div class="transition-flash" aria-hidden="true"></div>
+
+</div>

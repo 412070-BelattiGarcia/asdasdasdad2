@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.engine.EngineContext;
 import ar.edu.utn.frc.tup.piii.engine.model.GameState;
 import ar.edu.utn.frc.tup.piii.engine.model.PlayerState;
 import ar.edu.utn.frc.tup.piii.engine.model.TurnFlags;
+import ar.edu.utn.frc.tup.piii.engine.ports.CardLookupPort;
 import ar.edu.utn.frc.tup.piii.engine.ports.RandomizerPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,8 @@ class TurnManagerTest {
 
     @Mock
     private RandomizerPort randomizer;
+    @Mock
+    private CardLookupPort cardLookup;
     @Mock
     private EngineContext ctx;
     @Mock

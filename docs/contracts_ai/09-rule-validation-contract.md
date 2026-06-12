@@ -158,13 +158,14 @@ Reglas adicionales cuando el Trainer es una Herramienta:
 - el Pokémon target NO debe tener ya una Herramienta equipada (`toolCardInstanceId == null`)
 - cuenta como Objeto (no afecta límites de Partidario/Estadio)
 
-### Use Ability (pendiente de implementación)
+### Use Ability
 
 Reject if:
 - not MAIN phase
 - Pokémon no está en juego (Activo o Banca)
-- la Habilidad no pertenece al Pokémon especificado
-- la Habilidad ya fue usada este turno (si aplica según su texto)
+- la Habilidad no existe en la definición del Pokémon
+- la Habilidad ya fue usada este turno
+- Pokémon está ASLEEP o PARALYZED
 
 ## RuleValidator
 

@@ -11,39 +11,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EnergyRequirementValidator {
-    private PokemonInPlay attacker;
-    private CardLookupPort cardLookup;
-    private int attackIndex;
 
-    public EnergyRequirementValidator(PokemonInPlay attacker, CardLookupPort cardLookup, int attackIndex) {
-        this.attacker = attacker;
-        this.cardLookup = cardLookup;
-        this.attackIndex = attackIndex;
-    }
-
-    public PokemonInPlay getAttacker() { return attacker; }
-    public void setAttacker(PokemonInPlay attacker) { this.attacker = attacker; }
-    public CardLookupPort getCardLookup() { return cardLookup; }
-    public void setCardLookup(CardLookupPort cardLookup) { this.cardLookup = cardLookup; }
-    public int getAttackIndex() { return attackIndex; }
-    public void setAttackIndex(int attackIndex) { this.attackIndex = attackIndex; }
-
-    public boolean checkEnergyRequirements(PokemonInPlay attacker, CardLookupPort cardLookup, int attackIndex) {
+    public static boolean checkEnergyRequirements(
+            PokemonInPlay attacker,
+            CardLookupPort cardLookup,
+            int attackIndex) {
         if (attacker == null || cardLookup == null) {
             return false;
         }
 
-        PokemonCardDefinition pokemonCardDefinition = (PokemonCardDefinition) cardLookup.getCardById(attacker.getCardDefinitionId());
-        if (pokemonCardDefinition == null) {
+        PokemonCardDefinition pokemonDef = (PokemonCardDefinition) cardLookup.getCardById(attacker.getCardDefinitionId());
+        if (pokemonDef == null) {
             return false;
         }
 
-        if (attackIndex < 0 || pokemonCardDefinition.getAttacks() == null || attackIndex >= pokemonCardDefinition.getAttacks().size()) {
+        if (attackIndex < 0 || pokemonDef.getAttacks() == null || attackIndex >= pokemonDef.getAttacks().size()) {
             return false;
         }
 
-        PokemonCardDefinition.AttackDefinition attackDefinition = pokemonCardDefinition.getAttacks().get(attackIndex);
-        List<EnergyType> requiredCost = attackDefinition.getCost();
+        PokemonCardDefinition.AttackDefinition attackDef = pokemonDef.getAttacks().get(attackIndex);
+        List<EnergyType> requiredCost = attackDef.getCost();
 
         if (requiredCost == null || requiredCost.isEmpty()) {
             return true;

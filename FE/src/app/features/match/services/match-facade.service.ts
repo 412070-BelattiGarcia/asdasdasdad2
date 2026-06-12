@@ -1,13 +1,14 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { MatchApiService, MatchResponse } from '../../../core/api/match-api.service';
-import { MatchStateResponse } from '../../../shared/models/game-state.models';
 import { AuthService } from '../../../core/services/auth.service';
+import { MatchStateService } from './match-state.service';
 
 @Injectable({ providedIn: 'root' })
 export class MatchFacadeService {
   private readonly matchApi = inject(MatchApiService);
   private readonly authService = inject(AuthService);
+  private readonly matchState = inject(MatchStateService);
 
   private readonly _matchId = signal<string | null>(null);
   readonly matchId = this._matchId.asReadonly();
@@ -47,13 +48,12 @@ export class MatchFacadeService {
     );
   }
 
-  getMatchState(): Observable<MatchStateResponse> {
+  getMatchState(): void {
     const mId = this._matchId();
-    const pId = this._playerId();
-    if (!mId || !pId) {
-      throw new Error('No active match');
+    if (!mId) {
+      return;
     }
-    return this.matchApi.getMatchState(mId, pId);
+    this.matchState.initialize(mId);
   }
 
   reset(): void {

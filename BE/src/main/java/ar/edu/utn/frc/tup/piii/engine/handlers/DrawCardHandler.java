@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.engine.event.GameEvent;
 import ar.edu.utn.frc.tup.piii.engine.event.GameEventType;
 import ar.edu.utn.frc.tup.piii.engine.model.CardInstance;
 import ar.edu.utn.frc.tup.piii.engine.turn.TurnPhase;
+import ar.edu.utn.frc.tup.piii.engine.victory.FinishReason;
 import ar.edu.utn.frc.tup.piii.engine.victory.VictoryConditionChecker;
 
 import java.time.Instant;
@@ -37,18 +38,24 @@ public class DrawCardHandler implements GameHandler {
             VictoryConditionChecker.VictoryCheckResult victoryResult =
                     VictoryConditionChecker.check(state, action.getPlayerId());
             if (victoryResult.finished()) {
-                state.setWinnerPlayerId(victoryResult.winnerPlayerId());
-                state.setFinishReason(victoryResult.reason());
-                state.setStatus(MatchStatus.FINISHED);
+                if (victoryResult.winnerPlayerId() != null) {
+                    state.setWinnerPlayerId(victoryResult.winnerPlayerId());
+                    state.setFinishReason(victoryResult.reason());
+                    state.setStatus(MatchStatus.FINISHED);
 
-                ctx.addEvent(new GameEvent(
-                        GameEventType.VICTORY_DECIDED.name(),
-                        state.getMatchId(),
-                        state.getTurnNumber(),
-                        Instant.now(),
-                        "Deck is empty. Player cannot draw.",
-                        Map.of("winnerPlayerId", victoryResult.winnerPlayerId().toString())
-                ));
+                    ctx.addEvent(new GameEvent(
+                            GameEventType.VICTORY_DECIDED.name(),
+                            state.getMatchId(),
+                            state.getTurnNumber(),
+                            Instant.now(),
+                            "Deck is empty. Player cannot draw.",
+                            Map.of("winnerPlayerId", victoryResult.winnerPlayerId().toString())
+                    ));
+                } else if (victoryResult.suddenDeath()) {
+                    state.setSuddenDeath(true);
+                    state.setStatus(MatchStatus.FINISHED);
+                    state.setFinishReason(FinishReason.SUDDEN_DEATH);
+                }
             }
 
             state.getTurnFlags().setHasDrawnForTurn(true);

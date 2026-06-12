@@ -53,6 +53,13 @@ export class MatchApiService {
     return this.apiClient.get<MatchStateResponse>(`/matches/${matchId}/state?playerId=${playerId}`);
   }
 
+  listMatches(status?: string): Observable<MatchResponse[]> {
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    const query = params.toString();
+    return this.apiClient.get<MatchResponse[]>(`/matches${query ? '?' + query : ''}`);
+  }
+
   sendAction(matchId: string, action: GameActionRequest): Observable<GameActionResponse> {
     return this.apiClient.post<GameActionResponse>(`/matches/${matchId}/actions`, action);
   }

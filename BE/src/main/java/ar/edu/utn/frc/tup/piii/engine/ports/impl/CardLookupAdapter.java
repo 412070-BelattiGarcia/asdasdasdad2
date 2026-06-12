@@ -1,6 +1,9 @@
 package ar.edu.utn.frc.tup.piii.engine.ports.impl;
 
 import ar.edu.utn.frc.tup.piii.cards.domain.*;
+import ar.edu.utn.frc.tup.piii.engine.attack.AttackEffect;
+import ar.edu.utn.frc.tup.piii.engine.attack.AttackEffectType;
+import ar.edu.utn.frc.tup.piii.dtos.cards.AbilityDto;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardAttackEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardEntity;
 import ar.edu.utn.frc.tup.piii.repositories.entities.CardResistanceEntity;
@@ -10,9 +13,8 @@ import ar.edu.utn.frc.tup.piii.engine.ports.CardLookupPort;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -75,6 +77,7 @@ public class CardLookupAdapter implements CardLookupPort {
                     .map(this::toResistance)
                     .collect(Collectors.toList()));
         }
+        d.setAbilities(hydrateAbilities(e.getAbilities()));
         return d;
     }
 
@@ -117,7 +120,47 @@ public class CardLookupAdapter implements CardLookupPort {
         ad.setCost(splitEnumList(a.getPrintedCost(), EnergyType.class));
         ad.setDamage(a.getDamageText());
         ad.setText(a.getEffectText());
+        ad.setEffects(parseAttackEffects(a.getEffectCode(), a.getEffectText()));
         return ad;
+    }
+
+    private List<AttackEffect> parseAttackEffects(String effectCode, String effectText) {
+        if (effectCode == null || effectCode.isBlank()) return List.of();
+        String[] parts = effectCode.split(":");
+        if (parts.length == 0) return List.of();
+        AttackEffectType type;
+        try {
+            type = AttackEffectType.valueOf(parts[0]);
+        } catch (IllegalArgumentException e) {
+            return List.of();
+        }
+        Map<String, Object> params = new HashMap<>();
+        if (parts.length > 1) {
+            switch (type) {
+                case APPLY_SPECIAL_CONDITION:
+                    params.put("condition", parts[1]);
+                    break;
+                case DISCARD_ENERGY:
+                case DRAW_CARDS:
+                    params.put("count", Integer.parseInt(parts[1]));
+                    break;
+                case DAMAGE_BENCH:
+                case HEAL_USER:
+                    params.put("damage", Integer.parseInt(parts[1]));
+                    break;
+                case COIN_FLIP_BEFORE_DAMAGE:
+                case COIN_FLIP_AFTER_DAMAGE:
+                    params.put("effectType", parts[1]);
+                    if (parts.length > 2) params.put("effectParam", parts[2]);
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (effectText != null && !effectText.isBlank()) {
+            params.put("text", effectText);
+        }
+        return List.of(new AttackEffect(type, params));
     }
 
     private PokemonCardDefinition.WeaknessDefinition toWeakness(CardWeaknessEntity w) {
@@ -132,6 +175,26 @@ public class CardLookupAdapter implements CardLookupPort {
         rd.setType(parseEnergyType(r.getEnergyType()));
         rd.setValue(r.getValue() != null ? String.valueOf(r.getValue()) : null);
         return rd;
+    }
+
+    private List<AbilityDefinition> hydrateAbilities(String jsonAbilities) {
+        if (jsonAbilities == null || jsonAbilities.isBlank()) return List.of();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            AbilityDto[] dtos = mapper.readValue(jsonAbilities, AbilityDto[].class);
+            List<AbilityDefinition> result = new ArrayList<>();
+            for (AbilityDto dto : dtos) {
+                AbilityType type = AbilityType.ABILITY;
+                if (dto.type() != null) {
+                    if (dto.type().contains("Power")) type = AbilityType.POKEMON_POWER;
+                    else if (dto.type().contains("Body")) type = AbilityType.POKEMON_BODY;
+                }
+                result.add(new AbilityDefinition(dto.name(), dto.text(), type));
+            }
+            return result;
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     private EnergyType parseEnergyType(String value) {

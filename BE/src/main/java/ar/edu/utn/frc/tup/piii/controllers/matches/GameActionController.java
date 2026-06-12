@@ -3,6 +3,7 @@ package ar.edu.utn.frc.tup.piii.controllers.matches;
 import ar.edu.utn.frc.tup.piii.dtos.matches.GameActionRequest;
 import ar.edu.utn.frc.tup.piii.dtos.matches.GameActionResponse;
 import ar.edu.utn.frc.tup.piii.services.matches.MatchApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +21,7 @@ public class GameActionController {
 
     @PostMapping("/{id}/actions")
     public ResponseEntity<GameActionResponse> executeAction(@PathVariable UUID id,
-                                                             @RequestBody GameActionRequest request) {
+                                                             @Valid @RequestBody GameActionRequest request) {
         GameActionResponse response = matchApplicationService.executeAction(id, request);
         return ResponseEntity.ok(response);
     }

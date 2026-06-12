@@ -1,5 +1,8 @@
 package ar.edu.utn.frc.tup.piii.cards.domain;
 
+import ar.edu.utn.frc.tup.piii.engine.attack.AttackEffect;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class PokemonCardDefinition extends CardDefinition {
@@ -13,6 +16,7 @@ public class PokemonCardDefinition extends CardDefinition {
     private List<EnergyType> retreatCost;
     private boolean isEx;
     private boolean isMega;
+    private List<AbilityDefinition> abilities;
 
     public int getHp() { return hp; }
     public void setHp(int hp) { this.hp = hp; }
@@ -34,6 +38,8 @@ public class PokemonCardDefinition extends CardDefinition {
     public void setEx(boolean ex) { isEx = ex; }
     public boolean isMega() { return isMega; }
     public void setMega(boolean mega) { isMega = mega; }
+    public List<AbilityDefinition> getAbilities() { return abilities; }
+    public void setAbilities(List<AbilityDefinition> abilities) { this.abilities = abilities; }
 
     public static class AttackDefinition {
         private int index;
@@ -41,6 +47,7 @@ public class PokemonCardDefinition extends CardDefinition {
         private List<EnergyType> cost;
         private String damage;
         private String text;
+        private List<AttackEffect> effects;
 
         public int getIndex() { return index; }
         public void setIndex(int index) { this.index = index; }
@@ -52,6 +59,8 @@ public class PokemonCardDefinition extends CardDefinition {
         public void setDamage(String damage) { this.damage = damage; }
         public String getText() { return text; }
         public void setText(String text) { this.text = text; }
+        public List<AttackEffect> getEffects() { return effects; }
+        public void setEffects(List<AttackEffect> effects) { this.effects = effects; }
     }
 
     public static class WeaknessDefinition {

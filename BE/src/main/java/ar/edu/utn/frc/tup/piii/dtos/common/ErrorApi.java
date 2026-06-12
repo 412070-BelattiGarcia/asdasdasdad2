@@ -16,6 +16,7 @@ public class ErrorApi {
     private String timestamp;
     private Integer status;
     private String error;
+    private String code;
     private String message;
     private String path;
     private Map<String, String> details;

@@ -7,6 +7,7 @@ import ar.edu.utn.frc.tup.piii.exceptions.NotFoundException;
 import ar.edu.utn.frc.tup.piii.exceptions.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -26,8 +27,26 @@ public class GlobalExceptionHandler {
                 .body(ErrorApi.builder()
                         .timestamp(LocalDateTime.now().toString())
                         .status(status.value())
-                        .error(ex.getCode())
+                        .error(status.getReasonPhrase())
+                        .code(ex.getCode())
                         .message(ex.getMessage())
+                        .path(request.getDescription(false).replace("uri=", ""))
+                        .build());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorApi> handleValidationError(MethodArgumentNotValidException ex, WebRequest request) {
+        String message = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("Validation failed");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorApi.builder()
+                        .timestamp(LocalDateTime.now().toString())
+                        .status(HttpStatus.BAD_REQUEST.value())
+                        .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                        .code("VALIDATION_ERROR")
+                        .message(message)
                         .path(request.getDescription(false).replace("uri=", ""))
                         .build());
     }
@@ -38,7 +57,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorApi.builder()
                         .timestamp(LocalDateTime.now().toString())
                         .status(HttpStatus.BAD_REQUEST.value())
-                        .error("BAD_REQUEST")
+                        .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                        .code("INVALID_ARGUMENT")
                         .message(ex.getMessage())
                         .path(request.getDescription(false).replace("uri=", ""))
                         .build());
@@ -50,7 +70,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorApi.builder()
                         .timestamp(LocalDateTime.now().toString())
                         .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                        .error("INTERNAL_ERROR")
+                        .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
+                        .code("INTERNAL_ERROR")
                         .message(ex.getMessage())
                         .path(request.getDescription(false).replace("uri=", ""))
                         .build());

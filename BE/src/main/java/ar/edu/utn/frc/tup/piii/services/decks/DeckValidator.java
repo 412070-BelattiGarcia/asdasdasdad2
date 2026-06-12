@@ -4,6 +4,7 @@ import ar.edu.utn.frc.tup.piii.cards.domain.CardDefinition;
 import ar.edu.utn.frc.tup.piii.cards.domain.EnergyCardDefinition;
 import ar.edu.utn.frc.tup.piii.cards.domain.EnergyCardType;
 import ar.edu.utn.frc.tup.piii.cards.domain.PokemonCardDefinition;
+import ar.edu.utn.frc.tup.piii.cards.domain.TrainerCardDefinition;
 import ar.edu.utn.frc.tup.piii.decks.domain.DeckCard;
 import ar.edu.utn.frc.tup.piii.decks.domain.DeckValidationError;
 import ar.edu.utn.frc.tup.piii.decks.domain.DeckValidationResult;
@@ -32,6 +33,17 @@ public class DeckValidator {
             errors.add(DeckValidationError.DECK_SIZE_INVALID);
         }
 
+        int aceSpecCount = 0;
+        for (DeckCard dc : cards) {
+            CardDefinition def = cardLookupPort.getCardById(dc.getCardId());
+            if (def instanceof TrainerCardDefinition trainer && trainer.isAceSpec()) {
+                aceSpecCount += dc.getQuantity();
+            }
+        }
+        if (aceSpecCount > 1) {
+            errors.add(DeckValidationError.ACE_SPEC_LIMIT_EXCEEDED);
+        }
+
         Map<String, Integer> cardCounts = cards.stream()
                 .collect(Collectors.toMap(DeckCard::getCardId, DeckCard::getQuantity));
         for (Map.Entry<String, Integer> entry : cardCounts.entrySet()) {
@@ -40,6 +52,23 @@ public class DeckValidator {
                 if (def instanceof EnergyCardDefinition energy && energy.getEnergyCardType() == EnergyCardType.BASIC) {
                     continue;
                 }
+                errors.add(DeckValidationError.MORE_THAN_4_COPIES);
+                break;
+            }
+        }
+
+        // Special Energy: also validate by card name (same card may have different IDs)
+        Map<String, Integer> specialEnergyNameCounts = new java.util.HashMap<>();
+        for (DeckCard dc : cards) {
+            CardDefinition def = cardLookupPort.getCardById(dc.getCardId());
+            if (def instanceof EnergyCardDefinition energy
+                    && energy.getEnergyCardType() == EnergyCardType.SPECIAL) {
+                String name = def.getName() != null ? def.getName() : def.getId();
+                specialEnergyNameCounts.merge(name, dc.getQuantity(), Integer::sum);
+            }
+        }
+        for (Map.Entry<String, Integer> nameEntry : specialEnergyNameCounts.entrySet()) {
+            if (nameEntry.getValue() > 4) {
                 errors.add(DeckValidationError.MORE_THAN_4_COPIES);
                 break;
             }

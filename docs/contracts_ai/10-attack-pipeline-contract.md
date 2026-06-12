@@ -94,6 +94,7 @@ The attack resolution order is fixed. Este pipeline comienza después del draw a
    - defender weakness
    - defender resistance
    - defender modifiers
+   - **Fur Coat hook** (reduce damage by 20 if defender has Fur Coat + Grass Energy)
    - minimum 0
 8. Place damage counters
 9. Apply post-damage effects:
@@ -101,11 +102,13 @@ The attack resolution order is fixed. Este pipeline comienza después del draw a
    - energy discards
    - bench damage (NOTA: daño a Banca NO aplica weakness ni resistance)
    - healing
+   - **Spiky Shield hook** (3 counters on attacker if defender has Spiky Shield + Darkness Energy)
 10. Check knockouts
-11. Take Prize cards automáticamente (1 para KO normal, 2 para Pokémon-EX)
-12. Dueño del Pokémon KO'd elige reemplazo de su Banca (si Banca vacía → oponente gana)
-13. Check victory
-14. End turn
+11. **Destiny Burst hook** (coin flip, heads = 5 counters on attacker if KO'd Pokémon has Destiny Burst + Fire Energy)
+12. Take Prize cards automáticamente (1 para KO normal, 2 para Pokémon-EX)
+13. Dueño del Pokémon KO'd elige reemplazo de su Banca (si Banca vacía → oponente gana)
+14. Check victory
+15. End turn
 
 ## Damage formula for MVP
 

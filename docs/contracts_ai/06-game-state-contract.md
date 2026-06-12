@@ -71,6 +71,7 @@ damageCounters: int
 specialConditions: SpecialCondition[]
 attachedEnergies: CardInstance[]
 toolCardInstanceId: UUID | null
+abilitiesUsedThisTurn: Set<String>
 ```
 
 Energies attached to a Pokémon are stored as a `List<CardInstance>` directly in `PokemonInPlay.attachedEnergies`. No separate `AttachedCard` class exists.

@@ -57,6 +57,20 @@ These may coexist:
 
 A Pokémon may be BURNED + POISONED + PARALYZED at the same time.
 
+## Sweet Veil hook
+
+Sweet Veil is a passive ability that blocks special conditions on the player's Pokémon. It is checked before applying any special condition.
+
+**Block logic:**
+- When a special condition is about to be applied to a Pokémon
+- Check if ANY of the player's Pokémon in play has the Sweet Veil ability AND a Fairy Energy attached
+- If yes: block the condition, do not apply it
+- If no: apply the condition normally
+
+This affects ASLEEP, BURNED, CONFUSED, PARALYZED, POISONED.
+
+The hook is integrated in `ApplySpecialConditionResolver.resolve()`.
+
 ## Between-turns order
 
 Fixed order:

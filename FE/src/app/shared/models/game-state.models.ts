@@ -16,6 +16,11 @@ export interface PublicGameStateModel {
   currentPlayerId: string;
   firstPlayerId: string;
   players: PublicPlayerStateModel[];
+  winnerPlayerId?: string | null;
+  finishReason?: string | null;
+  mulliganDrawPending?: boolean;
+  mulliganDrawDeadline?: string;
+  pendingInitialMulliganPlayers?: string[];
 }
 
 export interface PublicPlayerStateModel {
@@ -24,6 +29,11 @@ export interface PublicPlayerStateModel {
   activePokemon: PublicPokemonSlotModel | null;
   bench: PublicPokemonSlotModel[];
   prizes: string[];
+  totalPrizeCount?: number;
+  setupConfirmed?: boolean;
+  mulliganCount?: number;
+  initialMulliganResolved?: boolean;
+  mulliganRevealedCards?: string[][];
 }
 
 export interface PublicPokemonSlotModel {
@@ -32,6 +42,7 @@ export interface PublicPokemonSlotModel {
   damageCounters: number;
   specialConditions: string[];
   attachedCards: string[];
+  evolvedThisTurn?: boolean;
 }
 
 export interface PrivatePlayerStateModel {
@@ -40,6 +51,7 @@ export interface PrivatePlayerStateModel {
   deckCount: number;
   discardCount: number;
   prizes: PrizeSlotModel[];
+  pendingMulliganDrawCount?: number;
 }
 
 export interface PrivateHandCardModel {

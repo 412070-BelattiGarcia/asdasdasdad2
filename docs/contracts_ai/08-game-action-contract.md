@@ -272,11 +272,9 @@ Reglas:
 - Permanece unida al Pokémon hasta que este es descartado (KO, etc.)
 - Si el Pokémon va a Banca o evoluciona, la Herramienta **permanece**
 
-## Habilidades de Pokémon (pendiente de implementación)
+## Habilidades de Pokémon (Implementado)
 
 Las Habilidades (Abilities) son efectos especiales que algunos Pokémon poseen. No son ataques. Se pueden usar durante MAIN phase, tanto del Pokémon Activo como de la Banca, y no consumen el turno ni el ataque.
-
-Acción futura prevista:
 
 ```json
 {
@@ -284,7 +282,7 @@ Acción futura prevista:
   "playerId": "player-1",
   "payload": {
     "pokemonInstanceId": "ci-30",
-    "abilityIndex": 0
+    "abilityName": "Water Shuriken"
   },
   "clientRequestId": "client-req-012"
 }
@@ -293,7 +291,10 @@ Acción futura prevista:
 Reglas:
 - Se pueden usar todas las Habilidades que se deseen por turno, salvo que el texto de la habilidad indique lo contrario.
 - Las Habilidades no son ataques — el Pokémon puede atacar en el mismo turno en que usó una Habilidad.
-- La validación depende del texto específico de cada Habilidad.
+- El Pokémon debe estar en juego (Activo o Banca).
+- La Habilidad debe existir en la definición del Pokémon.
+- La Habilidad no puede haber sido usada ya este turno.
+- Si el Pokémon está ASLEEP o PARALYZED, no puede usar Habilidades.
 
 ## Action rules
 

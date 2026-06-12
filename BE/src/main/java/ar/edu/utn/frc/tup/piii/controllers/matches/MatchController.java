@@ -5,10 +5,12 @@ import ar.edu.utn.frc.tup.piii.dtos.matches.JoinMatchRequest;
 import ar.edu.utn.frc.tup.piii.dtos.matches.MatchResponse;
 import ar.edu.utn.frc.tup.piii.dtos.matches.MatchStateResponse;
 import ar.edu.utn.frc.tup.piii.services.matches.MatchApplicationService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -21,15 +23,22 @@ public class MatchController {
         this.matchApplicationService = matchApplicationService;
     }
 
+    @GetMapping
+    public ResponseEntity<List<MatchResponse>> listMatches(
+            @RequestParam(required = false, defaultValue = "WAITING") String status) {
+        List<MatchResponse> matches = matchApplicationService.listAvailableMatches(status);
+        return ResponseEntity.ok(matches);
+    }
+
     @PostMapping
-    public ResponseEntity<MatchResponse> createMatch(@RequestBody CreateMatchRequest request) {
+    public ResponseEntity<MatchResponse> createMatch(@Valid @RequestBody CreateMatchRequest request) {
         MatchResponse response = matchApplicationService.createMatch(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/{id}/join")
     public ResponseEntity<MatchResponse> joinMatch(@PathVariable UUID id,
-                                                    @RequestBody JoinMatchRequest request) {
+                                                    @Valid @RequestBody JoinMatchRequest request) {
         MatchResponse response = matchApplicationService.joinMatch(id, request);
         return ResponseEntity.ok(response);
     }
